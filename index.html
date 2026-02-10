@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JARVIS AI Trading Signals</title>
+    <title>JARVIS AI Trading Signals - Wealth Hunter</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -17,6 +17,16 @@
 
     <!-- Main Container -->
     <div class="app-container">
+        <!-- Branding Header -->
+        <div class="wealth-hunter-brand">
+            <div class="brand-line"></div>
+            <div class="brand-text">
+                <span class="brand-made">MADE BY</span>
+                <span class="brand-name">WEALTH HUNTER</span>
+            </div>
+            <div class="brand-line"></div>
+        </div>
+
         <!-- Header -->
         <header class="app-header">
             <div class="header-glow"></div>
@@ -27,119 +37,278 @@
                     <span class="subtitle">TRADING TERMINAL</span>
                 </div>
             </div>
-            <div class="status-indicator">
-                <span class="status-dot"></span>
-                <span class="status-text">LIVE</span>
+            <div class="header-controls">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">LIVE</span>
+                </div>
+                <button class="settings-btn" id="settings-btn">
+                    <span class="settings-icon">⚙️</span>
+                </button>
             </div>
         </header>
 
-        <!-- Market Sentiment -->
-        <section class="sentiment-section">
-            <h2 class="section-title">
-                <span class="title-icon">📊</span>
-                MARKET SENTIMENT
-            </h2>
-            <div class="sentiment-grid">
-                <div class="sentiment-card" id="btc-sentiment">
-                    <div class="card-header">
-                        <span class="crypto-symbol">BTC</span>
-                        <span class="crypto-price" id="btc-price">Loading...</span>
-                    </div>
-                    <div class="sentiment-indicator">
-                        <div class="sentiment-bar">
-                            <div class="sentiment-fill" id="btc-sentiment-fill"></div>
-                        </div>
-                        <span class="sentiment-label" id="btc-sentiment-label">ANALYZING...</span>
-                    </div>
-                    <div class="sentiment-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Trend</span>
-                            <span class="detail-value" id="btc-trend">--</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">RSI</span>
-                            <span class="detail-value" id="btc-rsi">--</span>
-                        </div>
-                    </div>
-                </div>
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="signals">
+                <span class="tab-icon">🎯</span>
+                <span class="tab-label">SIGNALS</span>
+            </button>
+            <button class="nav-tab" data-tab="history">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">HISTORY</span>
+            </button>
+        </nav>
 
-                <div class="sentiment-card" id="eth-sentiment">
-                    <div class="card-header">
-                        <span class="crypto-symbol">ETH</span>
-                        <span class="crypto-price" id="eth-price">Loading...</span>
-                    </div>
-                    <div class="sentiment-indicator">
-                        <div class="sentiment-bar">
-                            <div class="sentiment-fill" id="eth-sentiment-fill"></div>
-                        </div>
-                        <span class="sentiment-label" id="eth-sentiment-label">ANALYZING...</span>
-                    </div>
-                    <div class="sentiment-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Trend</span>
-                            <span class="detail-value" id="eth-trend">--</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">RSI</span>
-                            <span class="detail-value" id="eth-rsi">--</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="sentiment-card" id="xrp-sentiment">
-                    <div class="card-header">
-                        <span class="crypto-symbol">XRP</span>
-                        <span class="crypto-price" id="xrp-price">Loading...</span>
-                    </div>
-                    <div class="sentiment-indicator">
-                        <div class="sentiment-bar">
-                            <div class="sentiment-fill" id="xrp-sentiment-fill"></div>
-                        </div>
-                        <span class="sentiment-label" id="xrp-sentiment-label">ANALYZING...</span>
-                    </div>
-                    <div class="sentiment-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Trend</span>
-                            <span class="detail-value" id="xrp-trend">--</span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">RSI</span>
-                            <span class="detail-value" id="xrp-rsi">--</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Trading Signals -->
-        <section class="signals-section">
-            <div class="section-header">
+        <!-- SIGNALS TAB -->
+        <div class="tab-content active" id="signals-tab">
+            <!-- Asset Selector -->
+            <section class="asset-selector-section">
                 <h2 class="section-title">
-                    <span class="title-icon">🎯</span>
-                    ACTIVE SIGNALS
+                    <span class="title-icon">💎</span>
+                    SELECT ASSET
                 </h2>
-                <div class="timeframe-selector">
-                    <button class="tf-btn active" data-timeframe="1d">1D</button>
-                    <button class="tf-btn" data-timeframe="15m">15M</button>
+                <div class="asset-type-toggle">
+                    <button class="asset-type-btn active" data-type="crypto">CRYPTO</button>
+                    <button class="asset-type-btn" data-type="stocks">STOCKS</button>
                 </div>
-            </div>
+                
+                <!-- Crypto Assets -->
+                <div class="asset-grid" id="crypto-assets">
+                    <button class="asset-card active" data-symbol="BTCUSDT" data-name="BTC">
+                        <div class="asset-symbol">BTC</div>
+                        <div class="asset-name">Bitcoin</div>
+                    </button>
+                    <button class="asset-card" data-symbol="ETHUSDT" data-name="ETH">
+                        <div class="asset-symbol">ETH</div>
+                        <div class="asset-name">Ethereum</div>
+                    </button>
+                    <button class="asset-card" data-symbol="XRPUSDT" data-name="XRP">
+                        <div class="asset-symbol">XRP</div>
+                        <div class="asset-name">Ripple</div>
+                    </button>
+                    <button class="asset-card" data-symbol="SOLUSDT" data-name="SOL">
+                        <div class="asset-symbol">SOL</div>
+                        <div class="asset-name">Solana</div>
+                    </button>
+                    <button class="asset-card" data-symbol="ADAUSDT" data-name="ADA">
+                        <div class="asset-symbol">ADA</div>
+                        <div class="asset-name">Cardano</div>
+                    </button>
+                    <button class="asset-card" data-symbol="DOGEUSDT" data-name="DOGE">
+                        <div class="asset-symbol">DOGE</div>
+                        <div class="asset-name">Dogecoin</div>
+                    </button>
+                    <button class="asset-card" data-symbol="BNBUSDT" data-name="BNB">
+                        <div class="asset-symbol">BNB</div>
+                        <div class="asset-name">BNB</div>
+                    </button>
+                    <button class="asset-card" data-symbol="AVAXUSDT" data-name="AVAX">
+                        <div class="asset-symbol">AVAX</div>
+                        <div class="asset-name">Avalanche</div>
+                    </button>
+                </div>
 
-            <div class="signals-container" id="signals-container">
-                <div class="loading-state">
-                    <div class="loading-spinner"></div>
-                    <p>Analyzing market structure...</p>
+                <!-- Stock Assets (Note: Requires different API) -->
+                <div class="asset-grid hidden" id="stock-assets">
+                    <button class="asset-card" data-symbol="AAPL" data-name="AAPL">
+                        <div class="asset-symbol">AAPL</div>
+                        <div class="asset-name">Apple</div>
+                    </button>
+                    <button class="asset-card" data-symbol="TSLA" data-name="TSLA">
+                        <div class="asset-symbol">TSLA</div>
+                        <div class="asset-name">Tesla</div>
+                    </button>
+                    <button class="asset-card" data-symbol="GOOGL" data-name="GOOGL">
+                        <div class="asset-symbol">GOOGL</div>
+                        <div class="asset-name">Google</div>
+                    </button>
+                    <button class="asset-card" data-symbol="MSFT" data-name="MSFT">
+                        <div class="asset-symbol">MSFT</div>
+                        <div class="asset-name">Microsoft</div>
+                    </button>
+                    <button class="asset-card" data-symbol="AMZN" data-name="AMZN">
+                        <div class="asset-symbol">AMZN</div>
+                        <div class="asset-name">Amazon</div>
+                    </button>
+                    <button class="asset-card" data-symbol="NVDA" data-name="NVDA">
+                        <div class="asset-symbol">NVDA</div>
+                        <div class="asset-name">NVIDIA</div>
+                    </button>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <!-- Timeframe Selector -->
+            <section class="timeframe-section">
+                <h2 class="section-title">
+                    <span class="title-icon">⏱️</span>
+                    TIMEFRAME
+                </h2>
+                <div class="timeframe-grid">
+                    <button class="tf-btn active" data-timeframe="1d" data-interval="1d">1D</button>
+                    <button class="tf-btn" data-timeframe="4h" data-interval="4h">4H</button>
+                    <button class="tf-btn" data-timeframe="2h" data-interval="2h">2H</button>
+                    <button class="tf-btn" data-timeframe="1h" data-interval="1h">1H</button>
+                    <button class="tf-btn" data-timeframe="30m" data-interval="30m">30M</button>
+                    <button class="tf-btn" data-timeframe="15m" data-interval="15m">15M</button>
+                    <button class="tf-btn" data-timeframe="5m" data-interval="5m">5M</button>
+                    <button class="tf-btn" data-timeframe="1m" data-interval="1m">1M</button>
+                </div>
+            </section>
+
+            <!-- Current Analysis Card -->
+            <section class="current-analysis">
+                <h2 class="section-title">
+                    <span class="title-icon">📊</span>
+                    CURRENT ANALYSIS
+                </h2>
+                <div class="analysis-card" id="current-analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-asset">
+                            <span class="analysis-symbol" id="current-symbol">BTC</span>
+                            <span class="analysis-timeframe" id="current-timeframe">1D</span>
+                        </div>
+                        <div class="analysis-price" id="current-price">Loading...</div>
+                    </div>
+                    
+                    <div class="analysis-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">Trend</span>
+                            <span class="metric-value" id="metric-trend">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">RSI</span>
+                            <span class="metric-value" id="metric-rsi">--</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Signal</span>
+                            <span class="metric-value" id="metric-signal">WAITING</span>
+                        </div>
+                    </div>
+
+                    <div class="signal-display" id="signal-display">
+                        <div class="no-signal">
+                            <div class="no-signal-icon">🎯</div>
+                            <p>Waiting for optimal entry...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div class="tab-content" id="history-tab">
+            <section class="history-section">
+                <h2 class="section-title">
+                    <span class="title-icon">📊</span>
+                    TRADE HISTORY
+                </h2>
+
+                <!-- Stats Summary -->
+                <div class="history-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Trades</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-card win">
+                        <div class="stat-label">Wins</div>
+                        <div class="stat-value" id="stat-wins">0</div>
+                    </div>
+                    <div class="stat-card loss">
+                        <div class="stat-label">Losses</div>
+                        <div class="stat-value" id="stat-losses">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Win Rate</div>
+                        <div class="stat-value" id="stat-winrate">0%</div>
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="history-filters">
+                    <button class="filter-btn active" data-filter="all">ALL</button>
+                    <button class="filter-btn" data-filter="wins">WINS</button>
+                    <button class="filter-btn" data-filter="losses">LOSSES</button>
+                    <button class="filter-btn" data-filter="tp">HIT TP</button>
+                    <button class="filter-btn" data-filter="sl">HIT SL</button>
+                </div>
+
+                <!-- Trade History List -->
+                <div class="history-list" id="history-list">
+                    <div class="empty-history">
+                        <div class="empty-icon">📝</div>
+                        <p>No trade history yet</p>
+                        <p class="empty-subtext">Signals will be tracked automatically</p>
+                    </div>
+                </div>
+            </section>
+        </div>
 
         <!-- Footer -->
         <footer class="app-footer">
             <div class="footer-info">
-                <span class="update-time">Last updated: <span id="last-update">--</span></span>
+                <span class="trading-style-display">Style: <span id="current-style">Day Trading</span></span>
                 <span class="footer-separator">|</span>
-                <span class="auto-refresh">Auto-refresh: <span id="refresh-timer">30s</span></span>
+                <span class="update-time">Updated: <span id="last-update">--</span></span>
             </div>
         </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ SETTINGS</h2>
+                <button class="modal-close" id="close-settings">✕</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3 class="settings-title">Trading Style</h3>
+                    <p class="settings-description">Choose your preferred trading approach</p>
+                    
+                    <div class="trading-style-selector">
+                        <button class="style-option active" data-style="day">
+                            <div class="style-icon">📈</div>
+                            <div class="style-name">Day Trading</div>
+                            <div class="style-desc">Intraday positions</div>
+                        </button>
+                        
+                        <button class="style-option" data-style="swing">
+                            <div class="style-icon">📊</div>
+                            <div class="style-name">Swing Trading</div>
+                            <div class="style-desc">Multi-day holds</div>
+                        </button>
+                        
+                        <button class="style-option" data-style="scalp">
+                            <div class="style-icon">⚡</div>
+                            <div class="style-name">Scalping</div>
+                            <div class="style-desc">Quick in & out</div>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="settings-title">Auto-Refresh</h3>
+                    <div class="refresh-options">
+                        <button class="refresh-option" data-refresh="15">15s</button>
+                        <button class="refresh-option active" data-refresh="30">30s</button>
+                        <button class="refresh-option" data-refresh="60">60s</button>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="settings-title">Trade Tracking</h3>
+                    <div class="toggle-setting">
+                        <span>Auto-track signals</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="auto-track" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="strategy.js"></script>
