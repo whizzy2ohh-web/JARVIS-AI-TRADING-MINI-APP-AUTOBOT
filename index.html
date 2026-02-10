@@ -68,12 +68,8 @@
                     <span class="title-icon">💎</span>
                     SELECT ASSET
                 </h2>
-                <div class="asset-type-toggle">
-                    <button class="asset-type-btn active" data-type="crypto">CRYPTO</button>
-                    <button class="asset-type-btn" data-type="stocks">STOCKS</button>
-                </div>
                 
-                <!-- Crypto Assets -->
+                <!-- Crypto Assets Only -->
                 <div class="asset-grid" id="crypto-assets">
                     <button class="asset-card active" data-symbol="BTCUSDT" data-name="BTC">
                         <div class="asset-symbol">BTC</div>
@@ -106,34 +102,6 @@
                     <button class="asset-card" data-symbol="AVAXUSDT" data-name="AVAX">
                         <div class="asset-symbol">AVAX</div>
                         <div class="asset-name">Avalanche</div>
-                    </button>
-                </div>
-
-                <!-- Stock Assets (Note: Requires different API) -->
-                <div class="asset-grid hidden" id="stock-assets">
-                    <button class="asset-card" data-symbol="AAPL" data-name="AAPL">
-                        <div class="asset-symbol">AAPL</div>
-                        <div class="asset-name">Apple</div>
-                    </button>
-                    <button class="asset-card" data-symbol="TSLA" data-name="TSLA">
-                        <div class="asset-symbol">TSLA</div>
-                        <div class="asset-name">Tesla</div>
-                    </button>
-                    <button class="asset-card" data-symbol="GOOGL" data-name="GOOGL">
-                        <div class="asset-symbol">GOOGL</div>
-                        <div class="asset-name">Google</div>
-                    </button>
-                    <button class="asset-card" data-symbol="MSFT" data-name="MSFT">
-                        <div class="asset-symbol">MSFT</div>
-                        <div class="asset-name">Microsoft</div>
-                    </button>
-                    <button class="asset-card" data-symbol="AMZN" data-name="AMZN">
-                        <div class="asset-symbol">AMZN</div>
-                        <div class="asset-name">Amazon</div>
-                    </button>
-                    <button class="asset-card" data-symbol="NVDA" data-name="NVDA">
-                        <div class="asset-symbol">NVDA</div>
-                        <div class="asset-name">NVIDIA</div>
                     </button>
                 </div>
             </section>
@@ -270,20 +238,26 @@
                     <div class="trading-style-selector">
                         <button class="style-option active" data-style="day">
                             <div class="style-icon">📈</div>
-                            <div class="style-name">Day Trading</div>
-                            <div class="style-desc">Intraday positions</div>
+                            <div class="style-info">
+                                <div class="style-name">Day Trading</div>
+                                <div class="style-desc">Intraday positions</div>
+                            </div>
                         </button>
                         
                         <button class="style-option" data-style="swing">
                             <div class="style-icon">📊</div>
-                            <div class="style-name">Swing Trading</div>
-                            <div class="style-desc">Multi-day holds</div>
+                            <div class="style-info">
+                                <div class="style-name">Swing Trading</div>
+                                <div class="style-desc">Multi-day holds</div>
+                            </div>
                         </button>
                         
                         <button class="style-option" data-style="scalp">
                             <div class="style-icon">⚡</div>
-                            <div class="style-name">Scalping</div>
-                            <div class="style-desc">Quick in & out</div>
+                            <div class="style-info">
+                                <div class="style-name">Scalping</div>
+                                <div class="style-desc">Quick in & out</div>
+                            </div>
                         </button>
                     </div>
                 </div>
