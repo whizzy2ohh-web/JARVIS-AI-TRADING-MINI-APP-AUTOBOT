@@ -1,21 +1,192 @@
-// ==================== JARVIS AI TRADING STRATEGY ====================
-// Converted from Pine Script to JavaScript
+// ==================== JARVIS AI TRADING STRATEGY V2 ====================
+// Converted from Pine Script to JavaScript with Trade Tracking
 
 class TradingStrategy {
     constructor() {
-        // Strategy Parameters (matching Pine Script defaults)
-        this.config = {
-            swingLength: 5,
-            bos_threshold: 0.1,
-            fvgMinSize: 0.15,
-            obLookback: 5,
-            stopLossATR: 1.5,
-            takeProfitRR: 3.0,
-            partialTP_RR: 1.5,
-            trendMAPeriod: 50,
-            rsiPeriod: 14,
-            atrPeriod: 14
+        // Current trading style
+        this.tradingStyle = 'day'; // 'day', 'swing', or 'scalp'
+        
+        // Base configuration for each trading style
+        this.styleConfigs = {
+            swing: {
+                swingLength: 7,
+                bos_threshold: 0.15,
+                fvgMinSize: 0.20,
+                obLookback: 7,
+                stopLossATR: 2.0,
+                takeProfitRR: 5.0,
+                partialTP_RR: 2.5,
+                trendMAPeriod: 100,
+                rsiPeriod: 14,
+                atrPeriod: 14
+            },
+            day: {
+                swingLength: 5,
+                bos_threshold: 0.1,
+                fvgMinSize: 0.15,
+                obLookback: 5,
+                stopLossATR: 1.5,
+                takeProfitRR: 3.0,
+                partialTP_RR: 1.5,
+                trendMAPeriod: 50,
+                rsiPeriod: 14,
+                atrPeriod: 14
+            },
+            scalp: {
+                swingLength: 3,
+                bos_threshold: 0.05,
+                fvgMinSize: 0.10,
+                obLookback: 3,
+                stopLossATR: 1.0,
+                takeProfitRR: 2.0,
+                partialTP_RR: 1.0,
+                trendMAPeriod: 20,
+                rsiPeriod: 14,
+                atrPeriod: 14
+            }
         };
+
+        // Active configuration
+        this.config = this.styleConfigs.day;
+
+        // Trade tracking
+        this.activeSignals = new Map(); // Track active signals by symbol+timeframe
+        this.tradeHistory = this.loadTradeHistory();
+    }
+
+    // Switch trading style
+    setTradingStyle(style) {
+        if (this.styleConfigs[style]) {
+            this.tradingStyle = style;
+            this.config = this.styleConfigs[style];
+            return true;
+        }
+        return false;
+    }
+
+    // Load trade history from localStorage
+    loadTradeHistory() {
+        try {
+            const saved = localStorage.getItem('jarvis_trade_history');
+            return saved ? JSON.parse(saved) : [];
+        } catch (error) {
+            console.error('Error loading trade history:', error);
+            return [];
+        }
+    }
+
+    // Save trade history to localStorage
+    saveTradeHistory() {
+        try {
+            localStorage.setItem('jarvis_trade_history', JSON.stringify(this.tradeHistory));
+        } catch (error) {
+            console.error('Error saving trade history:', error);
+        }
+    }
+
+    // Add trade to history
+    addTradeToHistory(trade) {
+        this.tradeHistory.unshift(trade); // Add to beginning
+        // Keep only last 100 trades
+        if (this.tradeHistory.length > 100) {
+            this.tradeHistory = this.tradeHistory.slice(0, 100);
+        }
+        this.saveTradeHistory();
+    }
+
+    // Get trade statistics
+    getTradeStats() {
+        const total = this.tradeHistory.length;
+        const wins = this.tradeHistory.filter(t => t.result === 'win').length;
+        const losses = this.tradeHistory.filter(t => t.result === 'loss').length;
+        const tpHits = this.tradeHistory.filter(t => t.exitType === 'tp').length;
+        const slHits = this.tradeHistory.filter(t => t.exitType === 'sl').length;
+        const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
+
+        return {
+            total,
+            wins,
+            losses,
+            tpHits,
+            slHits,
+            winRate
+        };
+    }
+
+    // Filter trade history
+    filterTradeHistory(filter) {
+        switch (filter) {
+            case 'wins':
+                return this.tradeHistory.filter(t => t.result === 'win');
+            case 'losses':
+                return this.tradeHistory.filter(t => t.result === 'loss');
+            case 'tp':
+                return this.tradeHistory.filter(t => t.exitType === 'tp');
+            case 'sl':
+                return this.tradeHistory.filter(t => t.exitType === 'sl');
+            default:
+                return this.tradeHistory;
+        }
+    }
+
+    // Check if active signal was hit (TP or SL)
+    checkActiveSignal(symbol, timeframe, currentPrice) {
+        const key = `${symbol}_${timeframe}`;
+        const signal = this.activeSignals.get(key);
+
+        if (!signal) return null;
+
+        let exitType = null;
+        let result = null;
+
+        if (signal.type === 'LONG') {
+            if (currentPrice >= signal.takeProfit) {
+                exitType = 'tp';
+                result = 'win';
+            } else if (currentPrice <= signal.stopLoss) {
+                exitType = 'sl';
+                result = 'loss';
+            }
+        } else if (signal.type === 'SHORT') {
+            if (currentPrice <= signal.takeProfit) {
+                exitType = 'tp';
+                result = 'win';
+            } else if (currentPrice >= signal.stopLoss) {
+                exitType = 'sl';
+                result = 'loss';
+            }
+        }
+
+        if (exitType) {
+            // Signal was closed
+            const closedTrade = {
+                ...signal,
+                exitPrice: currentPrice,
+                exitType,
+                result,
+                exitTime: new Date().toISOString(),
+                pnl: this.calculatePnL(signal, currentPrice)
+            };
+
+            this.addTradeToHistory(closedTrade);
+            this.activeSignals.delete(key);
+
+            return { closed: true, trade: closedTrade };
+        }
+
+        return { closed: false, signal };
+    }
+
+    // Calculate P&L for a trade
+    calculatePnL(signal, exitPrice) {
+        const risk = Math.abs(signal.entry - signal.stopLoss);
+        if (signal.type === 'LONG') {
+            const pnl = exitPrice - signal.entry;
+            return (pnl / risk).toFixed(2) + 'R';
+        } else {
+            const pnl = signal.entry - exitPrice;
+            return (pnl / risk).toFixed(2) + 'R';
+        }
     }
 
     // Calculate Simple Moving Average
@@ -33,7 +204,6 @@ class TradingStrategy {
         let gains = 0;
         let losses = 0;
 
-        // Initial average gain/loss
         for (let i = closes.length - period; i < closes.length; i++) {
             const change = closes[i] - closes[i - 1];
             if (change > 0) {
@@ -82,7 +252,6 @@ class TradingStrategy {
         const index = candles.length - length - 1;
         const pivotCandle = candles[index];
 
-        // Check if it's higher than left and right bars
         for (let i = 1; i <= length; i++) {
             if (candles[index - i].high >= pivotCandle.high ||
                 candles[index + i].high >= pivotCandle.high) {
@@ -100,7 +269,6 @@ class TradingStrategy {
         const index = candles.length - length - 1;
         const pivotCandle = candles[index];
 
-        // Check if it's lower than left and right bars
         for (let i = 1; i <= length; i++) {
             if (candles[index - i].low <= pivotCandle.low ||
                 candles[index + i].low <= pivotCandle.low) {
@@ -118,7 +286,6 @@ class TradingStrategy {
         const current = candles[candles.length - 1];
         const prev2 = candles[candles.length - 3];
 
-        // Bullish FVG: Gap between high[2] and low (current)
         if (current.low > prev2.high) {
             const gapSize = ((current.low - prev2.high) / prev2.high) * 100;
             if (gapSize >= this.config.fvgMinSize) {
@@ -139,7 +306,6 @@ class TradingStrategy {
         const current = candles[candles.length - 1];
         const prev2 = candles[candles.length - 3];
 
-        // Bearish FVG: Gap between low[2] and high (current)
         if (current.high < prev2.low) {
             const gapSize = ((prev2.low - current.high) / prev2.low) * 100;
             if (gapSize >= this.config.fvgMinSize) {
@@ -159,13 +325,12 @@ class TradingStrategy {
 
         const current = candles[candles.length - 1];
         
-        // Look for last bearish candle before bullish move
         for (let i = 1; i <= lookback; i++) {
             const candle = candles[candles.length - 1 - i];
             
-            if (candle.close < candle.open && // Bearish candle
-                current.close > candle.close && // Current higher
-                current.close > current.open) { // Current bullish
+            if (candle.close < candle.open &&
+                current.close > candle.close &&
+                current.close > current.open) {
                 
                 return {
                     top: candle.high,
@@ -182,13 +347,12 @@ class TradingStrategy {
 
         const current = candles[candles.length - 1];
         
-        // Look for last bullish candle before bearish move
         for (let i = 1; i <= lookback; i++) {
             const candle = candles[candles.length - 1 - i];
             
-            if (candle.close > candle.open && // Bullish candle
-                current.close < candle.close && // Current lower
-                current.close < current.open) { // Current bearish
+            if (candle.close > candle.open &&
+                current.close < candle.close &&
+                current.close < current.open) {
                 
                 return {
                     top: candle.high,
@@ -207,8 +371,6 @@ class TradingStrategy {
 
         const currentCandle = candles[candles.length - 1];
         const closes = candles.map(c => c.close);
-        const highs = candles.map(c => c.high);
-        const lows = candles.map(c => c.low);
 
         // Calculate indicators
         const trendMA = this.calculateSMA(closes, this.config.trendMAPeriod);
@@ -271,6 +433,7 @@ class TradingStrategy {
         const shortSignal = bearishBOS && (shortInFVG || shortInOB);
 
         let signal = null;
+        const key = `${symbol}_${timeframe}`;
 
         if (longSignal) {
             const entryPrice = currentCandle.close;
@@ -288,8 +451,13 @@ class TradingStrategy {
                 takeProfit: takeProfit,
                 partialTP: partialTP,
                 rr: this.config.takeProfitRR,
-                zone: longInFVG ? 'FVG' : 'OB'
+                zone: longInFVG ? 'FVG' : 'OB',
+                entryTime: new Date().toISOString(),
+                tradingStyle: this.tradingStyle
             };
+
+            // Store active signal
+            this.activeSignals.set(key, signal);
         } else if (shortSignal) {
             const entryPrice = currentCandle.close;
             const stopLoss = entryPrice + (atr * this.config.stopLossATR);
@@ -306,17 +474,33 @@ class TradingStrategy {
                 takeProfit: takeProfit,
                 partialTP: partialTP,
                 rr: this.config.takeProfitRR,
-                zone: shortInFVG ? 'FVG' : 'OB'
+                zone: shortInFVG ? 'FVG' : 'OB',
+                entryTime: new Date().toISOString(),
+                tradingStyle: this.tradingStyle
             };
+
+            // Store active signal
+            this.activeSignals.set(key, signal);
         }
+
+        // Check if existing signal was hit
+        const signalCheck = this.checkActiveSignal(symbol, timeframe, currentCandle.close);
 
         return {
             marketTrend,
             trendClass,
             rsi: rsi ? rsi.toFixed(2) : '--',
             signal,
-            currentPrice: currentCandle.close
+            currentPrice: currentCandle.close,
+            signalCheck,
+            activeSignal: this.activeSignals.get(key)
         };
+    }
+
+    // Clear all trade history
+    clearHistory() {
+        this.tradeHistory = [];
+        this.saveTradeHistory();
     }
 }
 
