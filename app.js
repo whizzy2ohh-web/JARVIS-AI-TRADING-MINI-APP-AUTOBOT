@@ -1,4 +1,4 @@
-// ==================== JARVIS AI TELEGRAM MINI APP ====================
+// ==================== JARVIS AI TELEGRAM MINI APP V2 - FIXED ====================
 
 // Initialize Telegram Web App
 const tg = window.Telegram.WebApp;
@@ -11,16 +11,18 @@ tg.setBackgroundColor('#0a0e1a');
 
 // App State
 const appState = {
+    currentSymbol: 'BTCUSDT',
+    currentAssetName: 'BTC',
     currentTimeframe: '1d',
+    currentInterval: '1d',
     strategy: new TradingStrategy(),
-    refreshInterval: 30, // seconds
+    refreshInterval: 30,
     refreshTimer: null,
-    symbols: ['BTCUSDT', 'ETHUSDT', 'XRPUSDT']
+    autoTrack: true
 };
 
 // ==================== BINANCE API INTEGRATION ====================
 
-// Fetch OHLCV data from Binance
 async function fetchKlines(symbol, interval, limit = 200) {
     const baseUrl = 'https://api.binance.com/api/v3/klines';
     const url = `${baseUrl}?symbol=${symbol}&interval=${interval}&limit=${limit}`;
@@ -32,7 +34,6 @@ async function fetchKlines(symbol, interval, limit = 200) {
         }
         const data = await response.json();
         
-        // Convert to candle format
         return data.map(candle => ({
             timestamp: candle[0],
             open: parseFloat(candle[1]),
@@ -47,7 +48,6 @@ async function fetchKlines(symbol, interval, limit = 200) {
     }
 }
 
-// Fetch current price
 async function fetchCurrentPrice(symbol) {
     const url = `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
     
@@ -63,189 +63,284 @@ async function fetchCurrentPrice(symbol) {
 
 // ==================== UI UPDATE FUNCTIONS ====================
 
-// Update sentiment card
-function updateSentimentCard(symbol, analysis, price) {
-    const symbolLower = symbol.replace('USDT', '').toLowerCase();
+function updateCurrentAnalysis(analysis, price) {
+    // Update symbol and timeframe
+    document.getElementById('current-symbol').textContent = appState.currentAssetName;
+    document.getElementById('current-timeframe').textContent = appState.currentTimeframe.toUpperCase();
     
     // Update price
-    const priceElement = document.getElementById(`${symbolLower}-price`);
-    if (priceElement && price) {
-        priceElement.textContent = `$${price.toLocaleString('en-US', { 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2 
+    if (price) {
+        const decimals = price < 1 ? 4 : 2;
+        document.getElementById('current-price').textContent = `$${price.toLocaleString('en-US', {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals
         })}`;
     }
-    
+
     if (!analysis) return;
-    
-    // Update trend
-    const trendElement = document.getElementById(`${symbolLower}-trend`);
-    if (trendElement) {
-        trendElement.textContent = analysis.marketTrend;
-        trendElement.className = `detail-value ${analysis.trendClass}`;
-    }
-    
-    // Update RSI
-    const rsiElement = document.getElementById(`${symbolLower}-rsi`);
-    if (rsiElement) {
-        rsiElement.textContent = analysis.rsi;
-        const rsiValue = parseFloat(analysis.rsi);
-        if (!isNaN(rsiValue)) {
-            if (rsiValue > 70) {
-                rsiElement.className = 'detail-value bearish-trend';
-            } else if (rsiValue < 30) {
-                rsiElement.className = 'detail-value bullish-trend';
-            } else {
-                rsiElement.className = 'detail-value neutral-trend';
-            }
+
+    // Update metrics
+    const trendElement = document.getElementById('metric-trend');
+    trendElement.textContent = analysis.marketTrend;
+    trendElement.className = `metric-value ${analysis.trendClass}`;
+
+    const rsiElement = document.getElementById('metric-rsi');
+    rsiElement.textContent = analysis.rsi;
+    const rsiValue = parseFloat(analysis.rsi);
+    if (!isNaN(rsiValue)) {
+        if (rsiValue > 70) {
+            rsiElement.className = 'metric-value bearish-trend';
+        } else if (rsiValue < 30) {
+            rsiElement.className = 'metric-value bullish-trend';
+        } else {
+            rsiElement.className = 'metric-value neutral-trend';
         }
     }
-    
-    // Update sentiment bar
-    const fillElement = document.getElementById(`${symbolLower}-sentiment-fill`);
-    const labelElement = document.getElementById(`${symbolLower}-sentiment-label`);
-    
-    if (fillElement && labelElement) {
-        let sentimentPercent = 50;
-        let sentimentColor = '#6b7389';
-        let sentimentLabel = 'NEUTRAL';
-        
-        if (analysis.marketTrend.includes('BULLISH')) {
-            sentimentPercent = analysis.marketTrend.includes('STRONG') ? 85 : 70;
-            sentimentColor = '#00ff88';
-            sentimentLabel = analysis.marketTrend;
-        } else if (analysis.marketTrend.includes('BEARISH')) {
-            sentimentPercent = analysis.marketTrend.includes('STRONG') ? 15 : 30;
-            sentimentColor = '#ff0055';
-            sentimentLabel = analysis.marketTrend;
+
+    // Update signal display
+    const signalDisplay = document.getElementById('signal-display');
+    const signalMetric = document.getElementById('metric-signal');
+
+    // Check for active signal first
+    const activeSignal = analysis.activeSignal || analysis.signal;
+
+    if (activeSignal) {
+        signalMetric.textContent = activeSignal.type;
+        signalMetric.className = activeSignal.type === 'LONG' ? 'metric-value bullish-trend' : 'metric-value bearish-trend';
+
+        const decimals = activeSignal.entry < 1 ? 4 : 2;
+        signalDisplay.innerHTML = `
+            <div class="active-signal">
+                <div class="signal-type-badge ${activeSignal.type.toLowerCase()}">
+                    <span>${activeSignal.type === 'LONG' ? '📈' : '📉'}</span>
+                    <span>${activeSignal.type} SIGNAL</span>
+                </div>
+                <div class="signal-prices">
+                    <div class="price-item">
+                        <span class="price-label">Entry</span>
+                        <span class="price-value entry">$${activeSignal.entry.toFixed(decimals)}</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Stop Loss</span>
+                        <span class="price-value stop-loss">$${activeSignal.stopLoss.toFixed(decimals)}</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Take Profit</span>
+                        <span class="price-value take-profit">$${activeSignal.takeProfit.toFixed(decimals)}</span>
+                    </div>
+                    <div class="price-item">
+                        <span class="price-label">Risk/Reward</span>
+                        <span class="price-value rr">1:${activeSignal.rr}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Check if signal was closed
+        if (analysis.signalCheck && analysis.signalCheck.closed) {
+            showTradeClosedNotification(analysis.signalCheck.trade);
         }
+    } else {
+        signalMetric.textContent = 'WAITING';
+        signalMetric.className = 'metric-value neutral-trend';
         
-        fillElement.style.width = `${sentimentPercent}%`;
-        fillElement.style.backgroundColor = sentimentColor;
-        labelElement.textContent = sentimentLabel;
-        labelElement.style.color = sentimentColor;
+        signalDisplay.innerHTML = `
+            <div class="no-signal">
+                <div class="no-signal-icon">🎯</div>
+                <p>Waiting for optimal entry...</p>
+            </div>
+        `;
     }
 }
 
-// Create signal card HTML
-function createSignalCard(signal) {
-    const typeClass = signal.type.toLowerCase();
-    const icon = signal.type === 'LONG' ? '📈' : '📉';
-    const displaySymbol = signal.symbol.replace('USDT', '');
-    
-    return `
-        <div class="signal-card ${typeClass} fade-in">
-            <div class="signal-header">
-                <div class="signal-asset">
-                    <div class="asset-name">${displaySymbol}</div>
-                    <div class="asset-timeframe">${signal.timeframe.toUpperCase()}</div>
-                </div>
-                <div class="signal-type ${typeClass}">
-                    <span class="signal-icon">${icon}</span>
-                    ${signal.type}
-                </div>
-            </div>
-            <div class="signal-details">
-                <div class="signal-detail">
-                    <span class="detail-label">Entry Price</span>
-                    <span class="detail-value entry">$${signal.entry.toFixed(4)}</span>
-                </div>
-                <div class="signal-detail">
-                    <span class="detail-label">Stop Loss</span>
-                    <span class="detail-value stop-loss">$${signal.stopLoss.toFixed(4)}</span>
-                </div>
-                <div class="signal-detail">
-                    <span class="detail-label">Take Profit</span>
-                    <span class="detail-value take-profit">$${signal.takeProfit.toFixed(4)}</span>
-                </div>
-                <div class="signal-detail">
-                    <span class="detail-label">Risk/Reward</span>
-                    <span class="detail-value rr">1:${signal.rr}</span>
-                </div>
-            </div>
-        </div>
-    `;
+function showTradeClosedNotification(trade) {
+    const message = trade.result === 'win' 
+        ? `✅ ${trade.symbol} ${trade.type} closed in profit! Exit: $${trade.exitPrice.toFixed(4)} (${trade.pnl})`
+        : `❌ ${trade.symbol} ${trade.type} stopped out. Exit: $${trade.exitPrice.toFixed(4)} (${trade.pnl})`;
+
+    if (tg.showAlert) {
+        tg.showAlert(message);
+    }
+
+    // Refresh history tab
+    updateHistoryTab();
 }
 
-// Update signals display
-function updateSignalsDisplay(signals) {
-    const container = document.getElementById('signals-container');
-    
-    if (signals.length === 0) {
-        container.innerHTML = `
-            <div class="no-signals fade-in">
-                <div class="no-signals-icon">🎯</div>
-                <p>No active signals at the moment</p>
-                <p style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.7;">
-                    Waiting for optimal entry conditions...
+// ==================== HISTORY TAB FUNCTIONS ====================
+
+function updateHistoryTab() {
+    const stats = appState.strategy.getTradeStats();
+
+    // Update stats
+    document.getElementById('stat-total').textContent = stats.total;
+    document.getElementById('stat-wins').textContent = stats.wins;
+    document.getElementById('stat-losses').textContent = stats.losses;
+    document.getElementById('stat-winrate').textContent = `${stats.winRate}%`;
+
+    // Update history list with current filter
+    const activeFilter = document.querySelector('.filter-btn.active');
+    const filter = activeFilter ? activeFilter.dataset.filter : 'all';
+    displayTradeHistory(filter);
+}
+
+function displayTradeHistory(filter = 'all') {
+    const historyList = document.getElementById('history-list');
+    const trades = appState.strategy.filterTradeHistory(filter);
+
+    if (trades.length === 0) {
+        historyList.innerHTML = `
+            <div class="empty-history">
+                <div class="empty-icon">📝</div>
+                <p>No trades found</p>
+                <p class="empty-subtext">
+                    ${filter === 'all' ? 'Signals will be tracked automatically' : `No ${filter} trades yet`}
                 </p>
             </div>
         `;
         return;
     }
-    
-    container.innerHTML = signals.map(signal => createSignalCard(signal)).join('');
+
+    historyList.innerHTML = trades.map(trade => createHistoryCard(trade)).join('');
+}
+
+function createHistoryCard(trade) {
+    const entryDate = new Date(trade.entryTime).toLocaleDateString();
+    const decimals = trade.entry < 1 ? 4 : 2;
+
+    return `
+        <div class="history-card ${trade.result}">
+            <div class="history-header">
+                <div class="history-asset">
+                    ${trade.symbol.replace('USDT', '')} 
+                    <span style="font-size: 0.7rem; color: var(--text-muted);">${trade.timeframe.toUpperCase()}</span>
+                </div>
+                <div class="history-result ${trade.result}">
+                    ${trade.result === 'win' ? '✅ WIN' : '❌ LOSS'}
+                </div>
+            </div>
+            <div class="history-details">
+                <div class="history-detail">
+                    <span class="history-label">Type:</span>
+                    <span class="history-value">${trade.type}</span>
+                </div>
+                <div class="history-detail">
+                    <span class="history-label">Entry:</span>
+                    <span class="history-value">$${trade.entry.toFixed(decimals)}</span>
+                </div>
+                <div class="history-detail">
+                    <span class="history-label">Exit:</span>
+                    <span class="history-value">$${trade.exitPrice ? trade.exitPrice.toFixed(decimals) : '--'}</span>
+                </div>
+                <div class="history-detail">
+                    <span class="history-label">Exit Type:</span>
+                    <span class="history-value">${trade.exitType ? trade.exitType.toUpperCase() : '--'}</span>
+                </div>
+                <div class="history-detail">
+                    <span class="history-label">P&L:</span>
+                    <span class="history-value" style="color: ${trade.result === 'win' ? 'var(--cyber-green)' : 'var(--cyber-red)'}">
+                        ${trade.pnl || '--'}
+                    </span>
+                </div>
+                <div class="history-detail">
+                    <span class="history-label">Date:</span>
+                    <span class="history-value">${entryDate}</span>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 // ==================== DATA FETCHING & ANALYSIS ====================
 
-// Analyze all symbols for current timeframe
-async function analyzeAllSymbols() {
-    const interval = appState.currentTimeframe === '1d' ? '1d' : '15m';
-    const signals = [];
-    
-    // Show loading state
-    const container = document.getElementById('signals-container');
-    container.innerHTML = `
-        <div class="loading-state">
-            <div class="loading-spinner"></div>
-            <p>Analyzing market structure...</p>
-        </div>
-    `;
-    
-    // Fetch and analyze each symbol
-    for (const symbol of appState.symbols) {
-        try {
-            // Fetch candle data
-            const candles = await fetchKlines(symbol, interval);
-            const price = await fetchCurrentPrice(symbol);
-            
-            if (!candles || candles.length < 100) {
-                console.error(`Insufficient data for ${symbol}`);
-                updateSentimentCard(symbol, null, price);
-                continue;
-            }
-            
-            // Analyze with strategy
-            const analysis = appState.strategy.analyzeMarket(
-                candles, 
-                symbol, 
-                appState.currentTimeframe
-            );
-            
-            // Update sentiment
-            updateSentimentCard(symbol, analysis, price);
-            
-            // Add signal if present
-            if (analysis.signal) {
-                signals.push(analysis.signal);
-            }
-            
-        } catch (error) {
-            console.error(`Error analyzing ${symbol}:`, error);
+async function analyzeCurrentAsset() {
+    const symbol = appState.currentSymbol;
+    const interval = appState.currentInterval;
+    const timeframe = appState.currentTimeframe;
+
+    try {
+        // Show loading
+        const signalDisplay = document.getElementById('signal-display');
+        signalDisplay.innerHTML = `
+            <div class="no-signal">
+                <div class="loading-spinner"></div>
+                <p>Analyzing ${appState.currentAssetName}...</p>
+            </div>
+        `;
+
+        // Fetch data
+        const candles = await fetchKlines(symbol, interval);
+        const price = await fetchCurrentPrice(symbol);
+
+        if (!candles || candles.length < 100) {
+            console.error(`Insufficient data for ${symbol}`);
+            updateCurrentAnalysis(null, price);
+            return;
         }
+
+        // Analyze
+        const analysis = appState.strategy.analyzeMarket(candles, symbol, timeframe);
+        
+        // Update UI
+        updateCurrentAnalysis(analysis, price);
+        
+        // Update last update time
+        updateLastUpdateTime();
+
+    } catch (error) {
+        console.error(`Error analyzing ${symbol}:`, error);
     }
-    
-    // Update signals display
-    updateSignalsDisplay(signals);
-    
-    // Update last update time
-    updateLastUpdateTime();
 }
 
-// ==================== UI INTERACTIONS ====================
+// ==================== EVENT HANDLERS ====================
 
-// Timeframe selector
+// Tab Navigation
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        // Update tab buttons
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+
+        // If switching to history, update it
+        if (tabName === 'history') {
+            updateHistoryTab();
+        }
+
+        // Haptic feedback
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    });
+});
+
+// Asset Selection
+document.querySelectorAll('.asset-card').forEach(card => {
+    card.addEventListener('click', async () => {
+        // Update active state
+        document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        
+        // Update app state
+        appState.currentSymbol = card.dataset.symbol;
+        appState.currentAssetName = card.dataset.name;
+        
+        // Re-analyze
+        await analyzeCurrentAsset();
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    });
+});
+
+// Timeframe Selection
 document.querySelectorAll('.tf-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         // Update active state
@@ -254,11 +349,100 @@ document.querySelectorAll('.tf-btn').forEach(btn => {
         
         // Update timeframe
         appState.currentTimeframe = btn.dataset.timeframe;
+        appState.currentInterval = btn.dataset.interval;
         
         // Re-analyze
-        await analyzeAllSymbols();
+        await analyzeCurrentAsset();
         
-        // Provide haptic feedback
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    });
+});
+
+// Settings Modal
+const settingsModal = document.getElementById('settings-modal');
+const settingsBtn = document.getElementById('settings-btn');
+const closeSettings = document.getElementById('close-settings');
+
+settingsBtn.addEventListener('click', () => {
+    settingsModal.classList.add('active');
+    if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+});
+
+closeSettings.addEventListener('click', () => {
+    settingsModal.classList.remove('active');
+});
+
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+        settingsModal.classList.remove('active');
+    }
+});
+
+// Trading Style Selection
+document.querySelectorAll('.style-option').forEach(option => {
+    option.addEventListener('click', () => {
+        // Update buttons
+        document.querySelectorAll('.style-option').forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        
+        // Update strategy
+        const style = option.dataset.style;
+        appState.strategy.setTradingStyle(style);
+        
+        // Update display
+        const styleNames = {
+            'day': 'Day Trading',
+            'swing': 'Swing Trading',
+            'scalp': 'Scalping'
+        };
+        document.getElementById('current-style').textContent = styleNames[style];
+        
+        // Re-analyze with new style
+        analyzeCurrentAsset();
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+    });
+});
+
+// Refresh Interval Selection
+document.querySelectorAll('.refresh-option').forEach(option => {
+    option.addEventListener('click', () => {
+        document.querySelectorAll('.refresh-option').forEach(o => o.classList.remove('active'));
+        option.classList.add('active');
+        
+        appState.refreshInterval = parseInt(option.dataset.refresh);
+        
+        // Restart timer
+        startRefreshTimer();
+        
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    });
+});
+
+// Auto-track Toggle
+document.getElementById('auto-track').addEventListener('change', (e) => {
+    appState.autoTrack = e.target.checked;
+});
+
+// History Filters
+document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        // Update active state
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Filter history
+        const filter = btn.dataset.filter;
+        displayTradeHistory(filter);
+        
         if (tg.HapticFeedback) {
             tg.HapticFeedback.impactOccurred('light');
         }
@@ -271,8 +455,7 @@ function updateLastUpdateTime() {
     const now = new Date();
     const timeString = now.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
-        minute: '2-digit',
-        second: '2-digit'
+        minute: '2-digit'
     });
     document.getElementById('last-update').textContent = timeString;
 }
@@ -280,25 +463,20 @@ function updateLastUpdateTime() {
 function startRefreshTimer() {
     let secondsLeft = appState.refreshInterval;
     
-    // Update timer display
-    const updateTimerDisplay = () => {
-        document.getElementById('refresh-timer').textContent = `${secondsLeft}s`;
-        secondsLeft--;
-        
-        if (secondsLeft < 0) {
-            secondsLeft = appState.refreshInterval;
-            analyzeAllSymbols();
-        }
-    };
-    
     // Clear existing timer
     if (appState.refreshTimer) {
         clearInterval(appState.refreshTimer);
     }
     
     // Start new timer
-    updateTimerDisplay();
-    appState.refreshTimer = setInterval(updateTimerDisplay, 1000);
+    appState.refreshTimer = setInterval(() => {
+        secondsLeft--;
+        
+        if (secondsLeft <= 0) {
+            secondsLeft = appState.refreshInterval;
+            analyzeCurrentAsset();
+        }
+    }, 1000);
 }
 
 // ==================== INITIALIZATION ====================
@@ -306,45 +484,36 @@ function startRefreshTimer() {
 async function initializeApp() {
     try {
         // Initial analysis
-        await analyzeAllSymbols();
+        await analyzeCurrentAsset();
         
         // Start auto-refresh
         startRefreshTimer();
         
+        // Initialize history tab
+        updateHistoryTab();
+        
         // Notify Telegram that app is ready
         tg.MainButton.hide();
         
-        console.log('JARVIS AI initialized successfully');
+        console.log('JARVIS AI V2 initialized successfully');
     } catch (error) {
         console.error('Initialization error:', error);
-        
-        // Show error to user
-        const container = document.getElementById('signals-container');
-        container.innerHTML = `
-            <div class="no-signals fade-in">
-                <div class="no-signals-icon">⚠️</div>
-                <p>Unable to load market data</p>
-                <p style="margin-top: 0.5rem; font-size: 0.875rem; opacity: 0.7;">
-                    Please check your connection and try again
-                </p>
-            </div>
-        `;
     }
 }
 
-// Handle visibility changes (pause when app is hidden)
+// Handle visibility changes
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         if (appState.refreshTimer) {
             clearInterval(appState.refreshTimer);
         }
     } else {
-        analyzeAllSymbols();
+        analyzeCurrentAsset();
         startRefreshTimer();
     }
 });
 
-// Start the app when DOM is loaded
+// Start the app
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
 } else {
