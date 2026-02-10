@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JARVIS AI Trading Signals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="cyber-grid"></div>
+    <div class="gradient-orbs"></div>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-glow"></div>
+            <div class="logo-container">
+                <div class="logo-icon">⚡</div>
+                <div class="logo-text">
+                    <h1>JARVIS AI</h1>
+                    <span class="subtitle">TRADING TERMINAL</span>
+                </div>
+            </div>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span class="status-text">LIVE</span>
+            </div>
+        </header>
+
+        <!-- Market Sentiment -->
+        <section class="sentiment-section">
+            <h2 class="section-title">
+                <span class="title-icon">📊</span>
+                MARKET SENTIMENT
+            </h2>
+            <div class="sentiment-grid">
+                <div class="sentiment-card" id="btc-sentiment">
+                    <div class="card-header">
+                        <span class="crypto-symbol">BTC</span>
+                        <span class="crypto-price" id="btc-price">Loading...</span>
+                    </div>
+                    <div class="sentiment-indicator">
+                        <div class="sentiment-bar">
+                            <div class="sentiment-fill" id="btc-sentiment-fill"></div>
+                        </div>
+                        <span class="sentiment-label" id="btc-sentiment-label">ANALYZING...</span>
+                    </div>
+                    <div class="sentiment-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Trend</span>
+                            <span class="detail-value" id="btc-trend">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">RSI</span>
+                            <span class="detail-value" id="btc-rsi">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-card" id="eth-sentiment">
+                    <div class="card-header">
+                        <span class="crypto-symbol">ETH</span>
+                        <span class="crypto-price" id="eth-price">Loading...</span>
+                    </div>
+                    <div class="sentiment-indicator">
+                        <div class="sentiment-bar">
+                            <div class="sentiment-fill" id="eth-sentiment-fill"></div>
+                        </div>
+                        <span class="sentiment-label" id="eth-sentiment-label">ANALYZING...</span>
+                    </div>
+                    <div class="sentiment-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Trend</span>
+                            <span class="detail-value" id="eth-trend">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">RSI</span>
+                            <span class="detail-value" id="eth-rsi">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sentiment-card" id="xrp-sentiment">
+                    <div class="card-header">
+                        <span class="crypto-symbol">XRP</span>
+                        <span class="crypto-price" id="xrp-price">Loading...</span>
+                    </div>
+                    <div class="sentiment-indicator">
+                        <div class="sentiment-bar">
+                            <div class="sentiment-fill" id="xrp-sentiment-fill"></div>
+                        </div>
+                        <span class="sentiment-label" id="xrp-sentiment-label">ANALYZING...</span>
+                    </div>
+                    <div class="sentiment-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Trend</span>
+                            <span class="detail-value" id="xrp-trend">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">RSI</span>
+                            <span class="detail-value" id="xrp-rsi">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Trading Signals -->
+        <section class="signals-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <span class="title-icon">🎯</span>
+                    ACTIVE SIGNALS
+                </h2>
+                <div class="timeframe-selector">
+                    <button class="tf-btn active" data-timeframe="1d">1D</button>
+                    <button class="tf-btn" data-timeframe="15m">15M</button>
+                </div>
+            </div>
+
+            <div class="signals-container" id="signals-container">
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Analyzing market structure...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-info">
+                <span class="update-time">Last updated: <span id="last-update">--</span></span>
+                <span class="footer-separator">|</span>
+                <span class="auto-refresh">Auto-refresh: <span id="refresh-timer">30s</span></span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="strategy.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
