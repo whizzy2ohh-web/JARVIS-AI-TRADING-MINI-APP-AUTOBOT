@@ -13,6 +13,17 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+    <!-- Audio Elements (FIXED with working Pixabay URLs) -->
+    <audio id="background-music" loop>
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_4a485b86b6.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="game-sound-collect">
+        <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="game-sound-gameover">
+        <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4dedf2bf94.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- Animated Background -->
     <div class="cyber-grid"></div>
     <div class="gradient-orbs"></div>
@@ -36,7 +47,7 @@
                 <div class="logo-icon">⚡</div>
                 <div class="logo-text">
                     <h1>JARVIS AI</h1>
-                    <span class="subtitle">TRADING TERMINAL</span>
+                    <span class="subtitle">TRADING TERMINAL V5</span>
                 </div>
             </div>
             <div class="header-controls">
@@ -50,7 +61,7 @@
             </div>
         </header>
 
-        <!-- Navigation Tabs -->
+        <!-- Navigation Tabs (10 tabs now) -->
         <nav class="nav-tabs">
             <button class="nav-tab active" data-tab="signals">
                 <span class="tab-icon">🎯</span>
@@ -67,6 +78,26 @@
             <button class="nav-tab" data-tab="history">
                 <span class="tab-icon">📊</span>
                 <span class="tab-label">HISTORY</span>
+            </button>
+            <button class="nav-tab" data-tab="exchange">
+                <span class="tab-icon">🔗</span>
+                <span class="tab-label">EXCHANGE</span>
+            </button>
+            <button class="nav-tab" data-tab="custom">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-label">CUSTOM</span>
+            </button>
+            <button class="nav-tab" data-tab="games">
+                <span class="tab-icon">🎮</span>
+                <span class="tab-label">GAMES</span>
+            </button>
+            <button class="nav-tab" data-tab="feedback">
+                <span class="tab-icon">💬</span>
+                <span class="tab-label">FEEDBACK</span>
+            </button>
+            <button class="nav-tab" data-tab="about">
+                <span class="tab-icon">👤</span>
+                <span class="tab-label">ABOUT</span>
             </button>
             <button class="nav-tab" data-tab="help">
                 <span class="tab-icon">❓</span>
@@ -98,16 +129,17 @@
             <!-- Asset Grid -->
             <section class="asset-selector-section">
                 <div class="asset-grid-header">
-                    <span class="asset-count" id="asset-count">Loading pairs...</span>
-                    <button class="toggle-view" id="toggle-view">
-                        <span id="view-icon">📋</span>
-                    </button>
-                </div>
-                <div class="asset-grid" id="crypto-assets">
-                    <div class="loading-state">
-                        <div class="loading-spinner"></div>
-                        <p>Loading trading pairs...</p>
+                    <h2 class="section-title">
+                        <span class="title-icon">💎</span>
+                        SELECT ASSET
+                    </h2>
+                    <div class="selected-asset-display" id="selected-display">
+                        <span class="asset-symbol" id="display-symbol">Select an asset</span>
+                        <button class="favorite-toggle" id="favorite-toggle" style="display: none;">⭐</button>
                     </div>
+                </div>
+                <div class="asset-grid" id="asset-grid">
+                    <!-- Assets populated by JavaScript -->
                 </div>
             </section>
 
@@ -118,55 +150,27 @@
                     TIMEFRAME
                 </h2>
                 <div class="timeframe-grid">
-                    <button class="tf-btn active" data-timeframe="1d" data-interval="1d">1D</button>
-                    <button class="tf-btn" data-timeframe="4h" data-interval="4h">4H</button>
-                    <button class="tf-btn" data-timeframe="2h" data-interval="2h">2H</button>
-                    <button class="tf-btn" data-timeframe="1h" data-interval="1h">1H</button>
-                    <button class="tf-btn" data-timeframe="30m" data-interval="30m">30M</button>
-                    <button class="tf-btn" data-timeframe="15m" data-interval="15m">15M</button>
-                    <button class="tf-btn" data-timeframe="5m" data-interval="5m">5M</button>
-                    <button class="tf-btn" data-timeframe="1m" data-interval="1m">1M</button>
+                    <button class="tf-btn" data-tf="1m">1M</button>
+                    <button class="tf-btn" data-tf="5m">5M</button>
+                    <button class="tf-btn" data-tf="15m">15M</button>
+                    <button class="tf-btn active" data-tf="1h">1H</button>
+                    <button class="tf-btn" data-tf="4h">4H</button>
+                    <button class="tf-btn" data-tf="1d">1D</button>
+                    <button class="tf-btn" data-tf="1w">1W</button>
+                    <button class="tf-btn" data-tf="1M">1MO</button>
                 </div>
             </section>
 
-            <!-- Current Analysis Card -->
-            <section class="current-analysis">
+            <!-- Analysis Display -->
+            <section class="analysis-section" id="analysis-section">
                 <h2 class="section-title">
-                    <span class="title-icon">📊</span>
-                    CURRENT ANALYSIS
+                    <span class="title-icon">🔮</span>
+                    ANALYSIS
                 </h2>
-                <div class="analysis-card" id="current-analysis-card">
-                    <div class="analysis-header">
-                        <div class="analysis-asset">
-                            <span class="analysis-symbol" id="current-symbol">BTC</span>
-                            <span class="analysis-timeframe" id="current-timeframe">1D</span>
-                        </div>
-                        <div class="analysis-price-section">
-                            <div class="analysis-price" id="current-price">Loading...</div>
-                            <button class="favorite-btn" id="favorite-btn" title="Add to favorites">⭐</button>
-                        </div>
-                    </div>
-                    
-                    <div class="analysis-metrics">
-                        <div class="metric-item">
-                            <span class="metric-label">Trend</span>
-                            <span class="metric-value" id="metric-trend">--</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">RSI</span>
-                            <span class="metric-value" id="metric-rsi">--</span>
-                        </div>
-                        <div class="metric-item">
-                            <span class="metric-label">Signal</span>
-                            <span class="metric-value" id="metric-signal">WAITING</span>
-                        </div>
-                    </div>
-
-                    <div class="signal-display" id="signal-display">
-                        <div class="no-signal">
-                            <div class="no-signal-icon">🎯</div>
-                            <p>Waiting for optimal entry...</p>
-                        </div>
+                <div class="analysis-card" id="analysis-card">
+                    <div class="analysis-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Select an asset and timeframe...</p>
                     </div>
                 </div>
             </section>
@@ -175,26 +179,23 @@
         <!-- CHART TAB -->
         <div class="tab-content" id="chart-tab">
             <section class="chart-section">
-                <div class="chart-header">
-                    <h2 class="section-title">
-                        <span class="title-icon">📈</span>
-                        PRICE CHART
-                    </h2>
-                    <div class="chart-info">
-                        <span class="chart-asset" id="chart-asset">BTC/USDT</span>
-                        <span class="chart-tf" id="chart-tf">1D</span>
-                    </div>
+                <h2 class="section-title">
+                    <span class="title-icon">📈</span>
+                    CHART VIEW
+                </h2>
+                <div class="chart-info-bar">
+                    <span id="chart-symbol-display">Select an asset to view chart</span>
+                    <span id="chart-timeframe-display"></span>
                 </div>
                 <div class="chart-container" id="chart-container">
-                    <div class="loading-state">
-                        <div class="loading-spinner"></div>
-                        <p>Loading chart...</p>
+                    <div class="chart-placeholder">
+                        <p>📈 Select an asset to view the chart</p>
                     </div>
                 </div>
                 <div class="chart-legend">
                     <div class="legend-item">
-                        <span class="legend-color" style="background: #00ff88;"></span>
-                        <span class="legend-label">Entry Zone</span>
+                        <span class="legend-color" style="background: #ffed00;"></span>
+                        <span class="legend-label">Entry Price</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-color" style="background: #ff0055;"></span>
@@ -213,13 +214,12 @@
             <section class="explanation-section">
                 <h2 class="section-title">
                     <span class="title-icon">💡</span>
-                    TRADE EXPLANATION
+                    TRADE REASONING
                 </h2>
                 <div class="explanation-card" id="explanation-card">
-                    <div class="explanation-empty">
-                        <div class="empty-icon">🎯</div>
-                        <p>No active signal</p>
-                        <p class="empty-subtext">When a signal appears, the reasoning will be shown here</p>
+                    <div class="explanation-placeholder">
+                        <p>💡 Trade explanation will appear when a signal is generated</p>
+                        <p class="explanation-hint">The system will explain why the trade was suggested based on market structure, entry zones, and confluence factors.</p>
                     </div>
                 </div>
             </section>
@@ -232,43 +232,252 @@
                     <span class="title-icon">📊</span>
                     TRADE HISTORY
                 </h2>
-
-                <!-- Stats Summary -->
-                <div class="history-stats">
+                <div class="history-stats" id="history-stats">
                     <div class="stat-card">
+                        <div class="stat-value" id="total-trades">0</div>
                         <div class="stat-label">Total Trades</div>
-                        <div class="stat-value" id="stat-total">0</div>
-                    </div>
-                    <div class="stat-card win">
-                        <div class="stat-label">Wins</div>
-                        <div class="stat-value" id="stat-wins">0</div>
-                    </div>
-                    <div class="stat-card loss">
-                        <div class="stat-label">Losses</div>
-                        <div class="stat-value" id="stat-losses">0</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-value" id="winning-trades">0</div>
+                        <div class="stat-label">Winners</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="losing-trades">0</div>
+                        <div class="stat-label">Losers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="win-rate">0%</div>
                         <div class="stat-label">Win Rate</div>
-                        <div class="stat-value" id="stat-winrate">0%</div>
                     </div>
                 </div>
-
-                <!-- Filter Buttons -->
                 <div class="history-filters">
-                    <button class="filter-btn active" data-filter="all">ALL</button>
-                    <button class="filter-btn" data-filter="wins">WINS</button>
-                    <button class="filter-btn" data-filter="losses">LOSSES</button>
-                    <button class="filter-btn" data-filter="tp">HIT TP</button>
-                    <button class="filter-btn" data-filter="sl">HIT SL</button>
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="long">Long</button>
+                    <button class="filter-btn" data-filter="short">Short</button>
+                    <button class="filter-btn" data-filter="win">Wins</button>
+                    <button class="filter-btn" data-filter="loss">Losses</button>
                 </div>
-
-                <!-- Trade History List -->
                 <div class="history-list" id="history-list">
-                    <div class="empty-history">
-                        <div class="empty-icon">📝</div>
+                    <div class="history-empty">
                         <p>No trade history yet</p>
-                        <p class="empty-subtext">Signals will be tracked automatically</p>
+                        <p class="history-hint">Trades will be automatically tracked when signals are generated</p>
                     </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- EXCHANGE TAB (NEW) -->
+        <div class="tab-content" id="exchange-tab">
+            <section class="exchange-section">
+                <h2 class="section-title">
+                    <span class="title-icon">🔗</span>
+                    EXCHANGE INTEGRATION
+                </h2>
+                <div class="exchange-warning">
+                    <p>⚠️ <strong>Important:</strong> Never share your API keys. This feature is for UI demonstration. Full integration requires secure backend implementation.</p>
+                </div>
+                <div class="exchange-grid">
+                    <div class="exchange-card" data-exchange="binance">
+                        <div class="exchange-logo">🟡</div>
+                        <div class="exchange-name">Binance</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                    <div class="exchange-card" data-exchange="bybit">
+                        <div class="exchange-logo">🟠</div>
+                        <div class="exchange-name">Bybit</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                    <div class="exchange-card" data-exchange="bingx">
+                        <div class="exchange-logo">🔵</div>
+                        <div class="exchange-name">BingX</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                    <div class="exchange-card" data-exchange="mexc">
+                        <div class="exchange-logo">🟢</div>
+                        <div class="exchange-name">MEXC</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                    <div class="exchange-card" data-exchange="blofin">
+                        <div class="exchange-logo">🟣</div>
+                        <div class="exchange-name">Blofin</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                    <div class="exchange-card" data-exchange="mt5">
+                        <div class="exchange-logo">⚫</div>
+                        <div class="exchange-name">MT5</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                    <div class="exchange-card" data-exchange="weex">
+                        <div class="exchange-logo">🔴</div>
+                        <div class="exchange-name">WeeX</div>
+                        <div class="exchange-status not-connected">Not Connected</div>
+                        <button class="exchange-connect-btn">Connect</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- CUSTOM STRATEGY TAB (NEW) -->
+        <div class="tab-content" id="custom-tab">
+            <section class="custom-section">
+                <h2 class="section-title">
+                    <span class="title-icon">⚙️</span>
+                    CUSTOM STRATEGY
+                </h2>
+                <div class="custom-form">
+                    <div class="form-group">
+                        <div class="form-header">
+                            <label for="custom-enable">Enable Custom Strategy</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="custom-enable">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-description">Strategy Description</label>
+                        <textarea id="custom-description" class="form-textarea" rows="6" placeholder="Describe your trading strategy in detail...
+
+Example:
+This strategy buys when price crosses above 50 SMA and RSI is oversold. It uses strict risk management with a 2% stop loss and targets 6% profit."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="custom-entry">Entry Condition</label>
+                        <input type="text" id="custom-entry" class="form-input" placeholder="e.g., Price > SMA50 AND RSI < 30">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="custom-sl">Stop Loss (%)</label>
+                            <input type="number" id="custom-sl" class="form-input" placeholder="2" step="0.1" min="0.1" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="custom-tp">Take Profit (%)</label>
+                            <input type="number" id="custom-tp" class="form-input" placeholder="6" step="0.1" min="0.1" max="1000">
+                        </div>
+                    </div>
+                    <button class="form-submit-btn" id="custom-save">
+                        <span class="btn-icon">💾</span>
+                        SAVE STRATEGY
+                    </button>
+                    <div class="custom-info">
+                        <p><strong>Note:</strong> Custom strategies are saved locally and used for reference. Full automated execution requires backend integration.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- GAMES TAB (NEW) -->
+        <div class="tab-content" id="games-tab">
+            <section class="games-section">
+                <h2 class="section-title">
+                    <span class="title-icon">🎮</span>
+                    CRYPTO CATCHER
+                </h2>
+                <div class="game-container">
+                    <div class="game-header">
+                        <div class="game-stat">
+                            <span class="game-stat-label">Score:</span>
+                            <span class="game-stat-value" id="game-score">0</span>
+                        </div>
+                        <div class="game-stat">
+                            <span class="game-stat-label">High Score:</span>
+                            <span class="game-stat-value" id="game-high-score">0</span>
+                        </div>
+                        <button class="game-sound-toggle" id="game-sound-toggle">🔊</button>
+                    </div>
+                    <canvas id="game-canvas" width="300" height="400"></canvas>
+                    <div class="game-controls">
+                        <button class="game-btn" id="game-start">START GAME</button>
+                        <button class="game-btn" id="game-restart" style="display: none;">RESTART</button>
+                    </div>
+                    <div class="game-instructions">
+                        <p><strong>How to Play:</strong></p>
+                        <p>🖱️ Desktop: Use Arrow Keys (← →)</p>
+                        <p>📱 Mobile: Tap left/right side of screen</p>
+                        <p>🎯 Catch falling coins to score points!</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- FEEDBACK TAB (NEW) -->
+        <div class="tab-content" id="feedback-tab">
+            <section class="feedback-section">
+                <h2 class="section-title">
+                    <span class="title-icon">💬</span>
+                    SEND FEEDBACK
+                </h2>
+                <div class="feedback-form">
+                    <div class="feedback-rating">
+                        <label>Rate Your Experience</label>
+                        <div class="star-rating" id="star-rating">
+                            <span class="star" data-rating="1">⭐</span>
+                            <span class="star" data-rating="2">⭐</span>
+                            <span class="star" data-rating="3">⭐</span>
+                            <span class="star" data-rating="4">⭐</span>
+                            <span class="star" data-rating="5">⭐</span>
+                        </div>
+                        <p class="rating-text" id="rating-text">Click to rate</p>
+                    </div>
+                    <div class="form-group">
+                        <label for="feedback-message">Your Feedback</label>
+                        <textarea id="feedback-message" class="form-textarea" rows="8" placeholder="Tell us what you think about JARVIS AI...
+
+• What features do you love?
+• What could be improved?
+• Any bugs or issues?
+• Feature suggestions?
+
+Your feedback helps us improve!"></textarea>
+                    </div>
+                    <button class="form-submit-btn" id="feedback-submit">
+                        <span class="btn-icon">📤</span>
+                        SUBMIT FEEDBACK
+                    </button>
+                    <div class="feedback-info">
+                        <p>Thank you for helping us improve JARVIS AI! Your feedback will be sent to our Telegram community.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ABOUT TAB (NEW) -->
+        <div class="tab-content" id="about-tab">
+            <section class="about-section">
+                <h2 class="section-title">
+                    <span class="title-icon">👤</span>
+                    ABOUT DEVELOPER
+                </h2>
+                <div class="developer-card">
+                    <div class="developer-avatar">
+                        <img src="WEALTH_HUNTER_THE_CREATOR.jpg" alt="Wealth Hunter" class="developer-image">
+                    </div>
+                    <h3 class="developer-name">WEALTH HUNTER</h3>
+                    <p class="developer-title">Professional Trading Analyst & Developer</p>
+                    
+                    <div class="developer-bio">
+                        <p>A Programming Crypto Analyst | Market Insider | XRP Surgeon | Trader | AI enthusiast.</p>
+                        <p><strong>He is your hidden eye into the financial market.</strong></p>
+                    </div>
+                    
+                    <div class="developer-skills">
+                        <span class="skill-tag">💻 Programming</span>
+                        <span class="skill-tag">📊 Crypto Analysis</span>
+                        <span class="skill-tag">💹 Trading</span>
+                        <span class="skill-tag">🤖 AI/ML</span>
+                        <span class="skill-tag">🔍 Market Research</span>
+                    </div>
+                    
+                    <a href="https://t.me/Wealth_Hunterx" target="_blank" class="social-btn">
+                        <span class="btn-icon">📱</span>
+                        CONNECT ON TELEGRAM
+                    </a>
                 </div>
             </section>
         </div>
@@ -280,242 +489,146 @@
                     <span class="title-icon">❓</span>
                     HELP & SUPPORT
                 </h2>
-                <div class="help-card">
-                    <div class="help-icon">💬</div>
-                    <h3>Need Assistance?</h3>
-                    <p>For help, questions, or to report issues, please contact us directly via Telegram.</p>
-                    <p class="help-subtext">Our team is ready to assist you with any concerns or feedback.</p>
-                    <a href="https://t.me/Wealth_Hunterx" class="help-button" target="_blank">
-                        <span class="help-btn-icon">📱</span>
-                        <span>CONTACT SUPPORT</span>
-                    </a>
+                <div class="help-content">
+                    <div class="help-card">
+                        <h3>🔍 Search Assets</h3>
+                        <p>Use the search bar to find any of 1500+ trading pairs. Type the coin symbol (e.g., BTC, ETH) or use quick filters.</p>
+                    </div>
+                    <div class="help-card">
+                        <h3>📈 View Charts</h3>
+                        <p>Switch to the CHART tab to see professional TradingView charts with entry, stop loss, and take profit levels marked.</p>
+                    </div>
+                    <div class="help-card">
+                        <h3>💡 Trade Reasoning</h3>
+                        <p>The WHY tab explains the logic behind each signal, including market structure and confluence factors.</p>
+                    </div>
+                    <div class="help-card">
+                        <h3>⭐ Favorites</h3>
+                        <p>Click the star button next to any asset to save it to your favorites for quick access.</p>
+                    </div>
+                    <div class="help-card">
+                        <h3>🎮 Games</h3>
+                        <p>Take a break with Crypto Catcher! Catch falling coins to score points and beat your high score.</p>
+                    </div>
+                    <div class="help-card">
+                        <h3>⚙️ Custom Strategy</h3>
+                        <p>Create your own trading strategy with custom entry conditions, stop loss, and take profit levels.</p>
+                    </div>
                 </div>
-
-                <div class="help-resources">
-                    <h3 class="resources-title">Quick Guide</h3>
-                    <div class="resource-item">
-                        <span class="resource-icon">🔍</span>
-                        <div class="resource-content">
-                            <strong>Search Assets</strong>
-                            <p>Type any coin name to find it from 1500+ pairs</p>
-                        </div>
-                    </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">📈</span>
-                        <div class="resource-content">
-                            <strong>View Charts</strong>
-                            <p>Switch to Chart tab to see visual analysis</p>
-                        </div>
-                    </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">💡</span>
-                        <div class="resource-content">
-                            <strong>Trade Reasoning</strong>
-                            <p>Check "WHY" tab to understand signal logic</p>
-                        </div>
-                    </div>
-                    <div class="resource-item">
-                        <span class="resource-icon">⭐</span>
-                        <div class="resource-content">
-                            <strong>Favorites</strong>
-                            <p>Star coins for quick access from favorites list</p>
-                        </div>
-                    </div>
+                <div class="help-support">
+                    <h3>Need More Help?</h3>
+                    <p>Contact our support team directly via Telegram</p>
+                    <a href="https://t.me/Wealth_Hunterx" target="_blank" class="support-btn">
+                        <span class="btn-icon">📱</span>
+                        CONTACT SUPPORT
+                    </a>
                 </div>
             </section>
         </div>
 
-        <div class="tab-content" id="feedback-tab">
-    <section class="feedback-section">
-        <h2>FEEDBACK</h2>
-        
-        <!-- Star Rating -->
-        <div class="star-rating" id="star-rating">
-            <span class="star" data-rating="1">⭐</span>
-            <span class="star" data-rating="2">⭐</span>
-            <span class="star" data-rating="3">⭐</span>
-            <span class="star" data-rating="4">⭐</span>
-            <span class="star" data-rating="5">⭐</span>
-        </div>
-        
-        <!-- Feedback Text -->
-        <textarea id="feedback-message" placeholder="Your feedback..."></textarea>
-        
-        <!-- Submit -->
-        <button id="feedback-submit">SUBMIT</button>
-    </section>
-</div>
-        <div class="exchange-grid">
-    <button class="exchange-card" data-exchange="binance">
-        <div class="exchange-logo">🟡</div>
-        <div class="exchange-name">Binance</div>
-        <div class="exchange-status">Not Connected</div>
-    </button>
-    <!-- Repeat for: Bybit, BingX, MEXC, Blofin, MT5, WeeX -->
-</div>
-
-        <div class="developer-card">
-    <div class="developer-avatar">💎</div>
-    <h3>WEALTH HUNTER</h3>
-    <p class="developer-title">Professional Trading Analyst & Developer</p>
-    
-    <div class="developer-bio">
-        <p>A Programming Crypto Analyst | Market Insider | 
-           XRP Surgeon | Trader | AI enthusiast.</p>
-        <p>He is your hidden eye into the financial market.</p>
-    </div>
-    
-    <div class="developer-skills">
-        <span class="skill-tag">💻 Programming</span>
-        <span class="skill-tag">📊 Crypto Analysis</span>
-        <span class="skill-tag">💹 Trading</span>
-        <span class="skill-tag">🤖 AI/ML</span>
-        <span class="skill-tag">🔍 Market Research</span>
-    </div>
-    
-    <a href="https://t.me/Wealth_Hunterx" class="social-btn">
-        CONNECT ON TELEGRAM
-    </a>
-</div>
-
-        <div class="custom-form">
-    <div class="form-group">
-        <label>Strategy Description</label>
-        <textarea id="custom-description" rows="6"></textarea>
-    </div>
-    
-    <div class="form-group">
-        <label>Entry Condition</label>
-        <input type="text" id="custom-entry">
-    </div>
-    
-    <div class="form-row">
-        <div class="form-group">
-            <label>Stop Loss (%)</label>
-            <input type="number" id="custom-sl">
-        </div>
-        <div class="form-group">
-            <label>Take Profit (%)</label>
-            <input type="number" id="custom-tp">
-        </div>
-    </div>
-    
-    <button id="custom-save">SAVE STRATEGY</button>
-</div>
-
-        <!-- Footer -->
-        <footer class="app-footer">
-            <div class="footer-info">
-                <span class="trading-style-display">Style: <span id="current-style">Day Trading</span></span>
-                <span class="footer-separator">|</span>
-                <span class="update-time">Updated: <span id="last-update">--</span></span>
-            </div>
-        </footer>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal-overlay" id="settings-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>⚙️ SETTINGS</h2>
-                <button class="modal-close" id="close-settings">✕</button>
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settings-panel">
+            <div class="settings-header">
+                <h2>SETTINGS</h2>
+                <button class="settings-close" id="settings-close">✕</button>
             </div>
             
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3 class="settings-title">Trading Style</h3>
-                    <p class="settings-description">Choose your preferred trading approach</p>
-                    
-                    <div class="trading-style-selector">
-                        <button class="style-option active" data-style="day">
-                            <div class="style-icon">📈</div>
-                            <div class="style-info">
-                                <div class="style-name">Day Trading</div>
-                                <div class="style-desc">Intraday positions</div>
-                            </div>
-                        </button>
-                        
-                        <button class="style-option" data-style="swing">
-                            <div class="style-icon">📊</div>
-                            <div class="style-info">
-                                <div class="style-name">Swing Trading</div>
-                                <div class="style-desc">Multi-day holds</div>
-                            </div>
-                        </button>
-                        
-                        <button class="style-option" data-style="scalp">
-                            <div class="style-icon">⚡</div>
-                            <div class="style-info">
-                                <div class="style-name">Scalping</div>
-                                <div class="style-desc">Quick in & out</div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3 class="settings-title">Auto-Refresh</h3>
-                    <div class="refresh-options">
-                        <button class="refresh-option" data-refresh="15">15s</button>
-                        <button class="refresh-option active" data-refresh="30">30s</button>
-                        <button class="refresh-option" data-refresh="60">60s</button>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <!-- Background Music -->
-<audio id="background-music" loop>
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_4a485b86b6.mp3">
-</audio>
-
-<!-- Game Sounds -->
-<audio id="game-sound-collect">
-  <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">
-</audio>
-
-<audio id="game-sound-gameover">
-  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4dedf2bf94.mp3">
-</audio>
-                </div>
-
-                <div class="settings-section">
-                    <h3 class="settings-title">Market Sentiment</h3>
-                    <div class="sentiment-overview" id="sentiment-overview">
-                        <div class="sentiment-metric">
-                            <span class="sentiment-metric-label">Fear & Greed</span>
-                            <span class="sentiment-metric-value" id="fear-greed">Loading...</span>
-                        </div>
-                        <div class="sentiment-metric">
-                            <span class="sentiment-metric-label">24h Volume</span>
-                            <span class="sentiment-metric-value" id="total-volume">Loading...</span>
-                        </div>
-                        <div class="sentiment-metric">
-                            <span class="sentiment-metric-label">BTC Dominance</span>
-                            <span class="sentiment-metric-value" id="btc-dominance">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-section">
-                    <h3 class="settings-title">Trade Tracking</h3>
-                    <div class="toggle-setting">
-                        <span>Auto-track signals</span>
-                        <label class="toggle">
-                            <input type="checkbox" id="auto-track" checked>
-                            <span class="toggle-slider"></span>
+            <div class="settings-content">
+                <!-- Trading Style -->
+                <div class="setting-group">
+                    <h3>Trading Style</h3>
+                    <div class="style-options">
+                        <label class="style-option">
+                            <input type="radio" name="trading-style" value="day" checked>
+                            <span class="option-label">
+                                <span class="option-icon">☀️</span>
+                                <span class="option-text">Day Trading</span>
+                            </span>
+                        </label>
+                        <label class="style-option">
+                            <input type="radio" name="trading-style" value="swing">
+                            <span class="option-label">
+                                <span class="option-icon">📈</span>
+                                <span class="option-text">Swing Trading</span>
+                            </span>
+                        </label>
+                        <label class="style-option">
+                            <input type="radio" name="trading-style" value="scalp">
+                            <span class="option-label">
+                                <span class="option-icon">⚡</span>
+                                <span class="option-text">Scalping</span>
+                            </span>
                         </label>
                     </div>
                 </div>
+
+                <!-- Auto Refresh -->
+                <div class="setting-group">
+                    <h3>Auto-Refresh Interval</h3>
+                    <select id="refresh-interval" class="setting-select">
+                        <option value="15">15 seconds</option>
+                        <option value="30" selected>30 seconds</option>
+                        <option value="60">60 seconds</option>
+                    </select>
+                </div>
+
+                <!-- Background Music (FIXED) -->
+                <div class="setting-group">
+                    <h3>Background Music</h3>
+                    <div class="setting-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="music-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Enable Music</span>
+                    </div>
+                    <div class="volume-control">
+                        <label for="volume-slider">Volume</label>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
+                        <span id="volume-value">50%</span>
+                    </div>
+                </div>
+
+                <!-- Market Sentiment -->
+                <div class="setting-group">
+                    <h3>Market Sentiment</h3>
+                    <div class="sentiment-display" id="sentiment-display">
+                        <div class="sentiment-item">
+                            <span class="sentiment-label">Fear & Greed:</span>
+                            <span class="sentiment-value" id="sentiment-fg">Loading...</span>
+                        </div>
+                        <div class="sentiment-item">
+                            <span class="sentiment-label">24h Volume:</span>
+                            <span class="sentiment-value" id="sentiment-volume">Loading...</span>
+                        </div>
+                        <div class="sentiment-item">
+                            <span class="sentiment-label">BTC Dominance:</span>
+                            <span class="sentiment-value" id="sentiment-btc-dom">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trade Tracking -->
+                <div class="setting-group">
+                    <h3>Trade Tracking</h3>
+                    <div class="setting-toggle">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="auto-track-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span class="toggle-label">Auto-track signals</span>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Settings Overlay -->
+        <div class="settings-overlay" id="settings-overlay"></div>
     </div>
 
-    <!-- Hidden Audio Element -->
-    <audio id="background-music" loop>
-        <source src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" type="audio/mpeg">
-    </audio>
-
+    <!-- Scripts -->
     <script src="strategy.js"></script>
     <script src="app.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
