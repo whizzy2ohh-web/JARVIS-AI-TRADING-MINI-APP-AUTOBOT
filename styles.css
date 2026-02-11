@@ -1811,27 +1811,584 @@ body {
     .nav-tab,
     .filter-btn,
     .style-option,
-
-    /* Mobile-first responsive */
-@media (max-width: 374px) {
-    .asset-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (min-width: 375px) {
-    .asset-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-/* Touch targets minimum 44px */
-.asset-card,
-.tf-btn {
-    min-height: 44px;
-    min-width: 44px;
-}
     .refresh-option {
         min-height: 44px;
     }
+}
+/* ==================== V5 NEW FEATURES STYLES ==================== */
+
+/* Exchange Integration Styles */
+.exchange-section {
+    padding: 20px;
+}
+
+.exchange-warning {
+    background: rgba(255, 237, 0, 0.1);
+    border: 1px solid rgba(255, 237, 0, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #ffed00;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.exchange-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.exchange-card {
+    background: linear-gradient(135deg, rgba(26, 31, 53, 0.8), rgba(15, 18, 30, 0.9));
+    border: 1px solid rgba(0, 247, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.exchange-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(0, 247, 255, 0.6);
+    box-shadow: 0 8px 20px rgba(0, 247, 255, 0.2);
+}
+
+.exchange-logo {
+    font-size: 40px;
+    margin-bottom: 10px;
+}
+
+.exchange-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+    margin: 10px 0;
+}
+
+.exchange-status {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.exchange-status.connected {
+    background: rgba(0, 255, 136, 0.2);
+    color: #00ff88;
+}
+
+.exchange-status.not-connected {
+    background: rgba(168, 179, 207, 0.2);
+    color: #a8b3cf;
+}
+
+.exchange-connect-btn {
+    background: linear-gradient(135deg, #00f7ff, #0088ff);
+    color: #0a0e1a;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    margin-top: 10px;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.exchange-connect-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 247, 255, 0.4);
+}
+
+/* Custom Strategy Styles */
+.custom-section {
+    padding: 20px;
+}
+
+.custom-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    display: block;
+    color: #00f7ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    background: rgba(26, 31, 53, 0.5);
+    border: 1px solid rgba(0, 247, 255, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+    outline: none;
+    border-color: #00f7ff;
+    box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ffed00, #ff8800);
+    color: #0a0e1a;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.form-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 237, 0, 0.4);
+}
+
+.btn-icon {
+    font-size: 20px;
+}
+
+.custom-info {
+    background: rgba(168, 179, 207, 0.1);
+    border: 1px solid rgba(168, 179, 207, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    color: #a8b3cf;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(168, 179, 207, 0.3);
+    transition: .3s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: #00f7ff;
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Games Styles */
+.games-section {
+    padding: 20px;
+}
+
+.game-container {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(26, 31, 53, 0.5);
+    border-radius: 8px;
+}
+
+.game-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-stat-label {
+    color: #a8b3cf;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.game-stat-value {
+    color: #ffed00;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.game-sound-toggle {
+    background: rgba(0, 247, 255, 0.2);
+    border: 1px solid rgba(0, 247, 255, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.game-sound-toggle:hover {
+    background: rgba(0, 247, 255, 0.3);
+    transform: scale(1.1);
+}
+
+#game-canvas {
+    width: 100%;
+    max-width: 300px;
+    height: 400px;
+    display: block;
+    margin: 0 auto;
+    background: #0a0e1a;
+    border: 2px solid rgba(0, 247, 255, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 0 30px rgba(0, 247, 255, 0.3);
+}
+
+.game-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.game-btn {
+    background: linear-gradient(135deg, #00f7ff, #0088ff);
+    color: #0a0e1a;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.game-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 247, 255, 0.4);
+}
+
+.game-instructions {
+    background: rgba(26, 31, 53, 0.5);
+    border: 1px solid rgba(0, 247, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    color: #a8b3cf;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.game-instructions strong {
+    color: #00f7ff;
+}
+
+/* Feedback Styles */
+.feedback-section {
+    padding: 20px;
+}
+
+.feedback-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.feedback-rating {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.feedback-rating label {
+    display: block;
+    color: #00f7ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.star-rating {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.star {
+    font-size: 40px;
+    cursor: pointer;
+    opacity: 0.3;
+    transition: all 0.3s ease;
+}
+
+.star:hover {
+    opacity: 1;
+    transform: scale(1.2);
+}
+
+.rating-text {
+    color: #ffed00;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 10px;
+}
+
+.feedback-info {
+    background: rgba(0, 247, 255, 0.1);
+    border: 1px solid rgba(0, 247, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    color: #a8b3cf;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+}
+
+/* About Styles */
+.about-section {
+    padding: 20px;
+}
+
+.developer-card {
+    max-width: 600px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(26, 31, 53, 0.8), rgba(15, 18, 30, 0.9));
+    border: 1px solid rgba(0, 247, 255, 0.3);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+}
+
+.developer-avatar {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #ffed00;
+    box-shadow: 0 0 30px rgba(255, 237, 0, 0.4);
+}
+
+.developer-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.developer-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #ffed00;
+    margin: 15px 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.developer-title {
+    color: #00f7ff;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.developer-bio {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    color: #a8b3cf;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.developer-bio strong {
+    color: #ffed00;
+    font-weight: 700;
+}
+
+.developer-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 25px 0;
+}
+
+.skill-tag {
+    background: linear-gradient(135deg, rgba(0, 247, 255, 0.2), rgba(0, 136, 255, 0.2));
+    border: 1px solid rgba(0, 247, 255, 0.4);
+    color: #00f7ff;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.social-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #ffed00, #ff8800);
+    color: #0a0e1a;
+    text-decoration: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    margin-top: 20px;
+    transition: all 0.3s ease;
+}
+
+.social-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(255, 237, 0, 0.4);
+}
+
+/* Responsive adjustments for new components */
+@media (max-width: 480px) {
+    .exchange-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .exchange-logo {
+        font-size: 30px;
+    }
+    
+    .exchange-name {
+        font-size: 14px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    #game-canvas {
+        max-width: 100%;
+        height: 350px;
+    }
+    
+    .star {
+        font-size: 32px;
+    }
+    
+    .developer-avatar {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .developer-name {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 360px) {
+    .exchange-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .game-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* Additional tab styles for new tabs */
+.nav-tabs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.nav-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ensure all tabs are visible and scrollable */
+.nav-tab {
+    flex-shrink: 0;
+    min-width: 80px;
 }
