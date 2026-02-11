@@ -8,6 +8,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <!-- TradingView Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
@@ -54,55 +56,58 @@
                 <span class="tab-icon">🎯</span>
                 <span class="tab-label">SIGNALS</span>
             </button>
+            <button class="nav-tab" data-tab="chart">
+                <span class="tab-icon">📈</span>
+                <span class="tab-label">CHART</span>
+            </button>
+            <button class="nav-tab" data-tab="explanation">
+                <span class="tab-icon">💡</span>
+                <span class="tab-label">WHY</span>
+            </button>
             <button class="nav-tab" data-tab="history">
                 <span class="tab-icon">📊</span>
                 <span class="tab-label">HISTORY</span>
+            </button>
+            <button class="nav-tab" data-tab="help">
+                <span class="tab-icon">❓</span>
+                <span class="tab-label">HELP</span>
             </button>
         </nav>
 
         <!-- SIGNALS TAB -->
         <div class="tab-content active" id="signals-tab">
-            <!-- Asset Selector -->
-            <section class="asset-selector-section">
+            <!-- Search Section -->
+            <section class="search-section">
                 <h2 class="section-title">
-                    <span class="title-icon">💎</span>
-                    SELECT ASSET
+                    <span class="title-icon">🔍</span>
+                    SEARCH ASSET
                 </h2>
-                
-                <!-- Crypto Assets Only -->
+                <div class="search-container">
+                    <input type="text" id="search-input" class="search-input" placeholder="Search 1500+ pairs... (e.g., BTC, ETH, SOL)">
+                    <button class="search-clear" id="search-clear">✕</button>
+                </div>
+                <div class="quick-filters">
+                    <button class="quick-filter active" data-filter="favorites">⭐ Favorites</button>
+                    <button class="quick-filter" data-filter="top">🔥 Top 20</button>
+                    <button class="quick-filter" data-filter="defi">💎 DeFi</button>
+                    <button class="quick-filter" data-filter="meme">🐕 Meme</button>
+                    <button class="quick-filter" data-filter="all">📋 All</button>
+                </div>
+            </section>
+
+            <!-- Asset Grid -->
+            <section class="asset-selector-section">
+                <div class="asset-grid-header">
+                    <span class="asset-count" id="asset-count">Loading pairs...</span>
+                    <button class="toggle-view" id="toggle-view">
+                        <span id="view-icon">📋</span>
+                    </button>
+                </div>
                 <div class="asset-grid" id="crypto-assets">
-                    <button class="asset-card active" data-symbol="BTCUSDT" data-name="BTC">
-                        <div class="asset-symbol">BTC</div>
-                        <div class="asset-name">Bitcoin</div>
-                    </button>
-                    <button class="asset-card" data-symbol="ETHUSDT" data-name="ETH">
-                        <div class="asset-symbol">ETH</div>
-                        <div class="asset-name">Ethereum</div>
-                    </button>
-                    <button class="asset-card" data-symbol="XRPUSDT" data-name="XRP">
-                        <div class="asset-symbol">XRP</div>
-                        <div class="asset-name">Ripple</div>
-                    </button>
-                    <button class="asset-card" data-symbol="SOLUSDT" data-name="SOL">
-                        <div class="asset-symbol">SOL</div>
-                        <div class="asset-name">Solana</div>
-                    </button>
-                    <button class="asset-card" data-symbol="ADAUSDT" data-name="ADA">
-                        <div class="asset-symbol">ADA</div>
-                        <div class="asset-name">Cardano</div>
-                    </button>
-                    <button class="asset-card" data-symbol="DOGEUSDT" data-name="DOGE">
-                        <div class="asset-symbol">DOGE</div>
-                        <div class="asset-name">Dogecoin</div>
-                    </button>
-                    <button class="asset-card" data-symbol="BNBUSDT" data-name="BNB">
-                        <div class="asset-symbol">BNB</div>
-                        <div class="asset-name">BNB</div>
-                    </button>
-                    <button class="asset-card" data-symbol="AVAXUSDT" data-name="AVAX">
-                        <div class="asset-symbol">AVAX</div>
-                        <div class="asset-name">Avalanche</div>
-                    </button>
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Loading trading pairs...</p>
+                    </div>
                 </div>
             </section>
 
@@ -136,7 +141,10 @@
                             <span class="analysis-symbol" id="current-symbol">BTC</span>
                             <span class="analysis-timeframe" id="current-timeframe">1D</span>
                         </div>
-                        <div class="analysis-price" id="current-price">Loading...</div>
+                        <div class="analysis-price-section">
+                            <div class="analysis-price" id="current-price">Loading...</div>
+                            <button class="favorite-btn" id="favorite-btn" title="Add to favorites">⭐</button>
+                        </div>
                     </div>
                     
                     <div class="analysis-metrics">
@@ -159,6 +167,59 @@
                             <div class="no-signal-icon">🎯</div>
                             <p>Waiting for optimal entry...</p>
                         </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- CHART TAB -->
+        <div class="tab-content" id="chart-tab">
+            <section class="chart-section">
+                <div class="chart-header">
+                    <h2 class="section-title">
+                        <span class="title-icon">📈</span>
+                        PRICE CHART
+                    </h2>
+                    <div class="chart-info">
+                        <span class="chart-asset" id="chart-asset">BTC/USDT</span>
+                        <span class="chart-tf" id="chart-tf">1D</span>
+                    </div>
+                </div>
+                <div class="chart-container" id="chart-container">
+                    <div class="loading-state">
+                        <div class="loading-spinner"></div>
+                        <p>Loading chart...</p>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #00ff88;"></span>
+                        <span class="legend-label">Entry Zone</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #ff0055;"></span>
+                        <span class="legend-label">Stop Loss</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: #00f7ff;"></span>
+                        <span class="legend-label">Take Profit</span>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- EXPLANATION TAB -->
+        <div class="tab-content" id="explanation-tab">
+            <section class="explanation-section">
+                <h2 class="section-title">
+                    <span class="title-icon">💡</span>
+                    TRADE EXPLANATION
+                </h2>
+                <div class="explanation-card" id="explanation-card">
+                    <div class="explanation-empty">
+                        <div class="empty-icon">🎯</div>
+                        <p>No active signal</p>
+                        <p class="empty-subtext">When a signal appears, the reasoning will be shown here</p>
                     </div>
                 </div>
             </section>
@@ -207,6 +268,58 @@
                         <div class="empty-icon">📝</div>
                         <p>No trade history yet</p>
                         <p class="empty-subtext">Signals will be tracked automatically</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- HELP TAB -->
+        <div class="tab-content" id="help-tab">
+            <section class="help-section">
+                <h2 class="section-title">
+                    <span class="title-icon">❓</span>
+                    HELP & SUPPORT
+                </h2>
+                <div class="help-card">
+                    <div class="help-icon">💬</div>
+                    <h3>Need Assistance?</h3>
+                    <p>For help, questions, or to report issues, please contact us directly via Telegram.</p>
+                    <p class="help-subtext">Our team is ready to assist you with any concerns or feedback.</p>
+                    <a href="https://t.me/Wealth_Hunterx" class="help-button" target="_blank">
+                        <span class="help-btn-icon">📱</span>
+                        <span>CONTACT SUPPORT</span>
+                    </a>
+                </div>
+
+                <div class="help-resources">
+                    <h3 class="resources-title">Quick Guide</h3>
+                    <div class="resource-item">
+                        <span class="resource-icon">🔍</span>
+                        <div class="resource-content">
+                            <strong>Search Assets</strong>
+                            <p>Type any coin name to find it from 1500+ pairs</p>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">📈</span>
+                        <div class="resource-content">
+                            <strong>View Charts</strong>
+                            <p>Switch to Chart tab to see visual analysis</p>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">💡</span>
+                        <div class="resource-content">
+                            <strong>Trade Reasoning</strong>
+                            <p>Check "WHY" tab to understand signal logic</p>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <span class="resource-icon">⭐</span>
+                        <div class="resource-content">
+                            <strong>Favorites</strong>
+                            <p>Star coins for quick access from favorites list</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -272,6 +385,41 @@
                 </div>
 
                 <div class="settings-section">
+                    <h3 class="settings-title">Background Music</h3>
+                    <p class="settings-description">Enhance your trading experience with ambient music</p>
+                    <div class="toggle-setting">
+                        <span>Enable Music</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="music-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="volume-control" id="volume-control">
+                        <span class="volume-label">🔊 Volume</span>
+                        <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
+                        <span class="volume-value" id="volume-value">50%</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3 class="settings-title">Market Sentiment</h3>
+                    <div class="sentiment-overview" id="sentiment-overview">
+                        <div class="sentiment-metric">
+                            <span class="sentiment-metric-label">Fear & Greed</span>
+                            <span class="sentiment-metric-value" id="fear-greed">Loading...</span>
+                        </div>
+                        <div class="sentiment-metric">
+                            <span class="sentiment-metric-label">24h Volume</span>
+                            <span class="sentiment-metric-value" id="total-volume">Loading...</span>
+                        </div>
+                        <div class="sentiment-metric">
+                            <span class="sentiment-metric-label">BTC Dominance</span>
+                            <span class="sentiment-metric-value" id="btc-dominance">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
                     <h3 class="settings-title">Trade Tracking</h3>
                     <div class="toggle-setting">
                         <span>Auto-track signals</span>
@@ -284,6 +432,11 @@
             </div>
         </div>
     </div>
+
+    <!-- Hidden Audio Element -->
+    <audio id="background-music" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3" type="audio/mpeg">
+    </audio>
 
     <script src="strategy.js"></script>
     <script src="app.js"></script>
