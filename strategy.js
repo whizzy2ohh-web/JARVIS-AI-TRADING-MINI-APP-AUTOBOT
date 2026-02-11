@@ -22,8 +22,8 @@ class TradingStrategy {
             },
             day: {
                 swingLength: 5,
-                bos_threshold: 0.1,
-                fvgMinSize: 0.15,
+                bos_threshold: 0.01,
+                fvgMinSize: 0.0015,
                 obLookback: 5,
                 stopLossATR: 1.5,
                 takeProfitRR: 3.0,
