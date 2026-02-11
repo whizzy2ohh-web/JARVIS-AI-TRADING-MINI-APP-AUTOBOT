@@ -2392,3 +2392,25 @@ input:checked + .toggle-slider:before {
     flex-shrink: 0;
     min-width: 80px;
 }
+/* RESPONSIVE FIXES */
+@media (max-width: 374px) {
+    html { font-size: 14px; }
+    .asset-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    .chart-container { height: 250px !important; }
+}
+
+@media (min-width: 375px) and (max-width: 479px) {
+    .chart-container { height: 300px !important; }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+    .chart-container { height: 350px !important; }
+}
+
+@media (min-width: 768px) {
+    .chart-container { height: 500px !important; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+    button, .nav-tab, .asset-card { min-height: 44px; min-width: 44px; }
+}
