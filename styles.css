@@ -1811,6 +1811,26 @@ body {
     .nav-tab,
     .filter-btn,
     .style-option,
+
+    /* Mobile-first responsive */
+@media (max-width: 374px) {
+    .asset-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 375px) {
+    .asset-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Touch targets minimum 44px */
+.asset-card,
+.tf-btn {
+    min-height: 44px;
+    min-width: 44px;
+}
     .refresh-option {
         min-height: 44px;
     }
