@@ -309,28 +309,21 @@ function initializeChart() {
     container.innerHTML = '';
     
     // Create chart
+    function initializeChart() {
+    const container = document.getElementById('chart-container');
+    if (!container) return;
+    
+    container.innerHTML = ''; // Clear first
+    
     appState.chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
         height: 400,
         layout: {
             background: { color: '#1a1f35' },
             textColor: '#a8b3cf',
-        },
-        grid: {
-            vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-            horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        rightPriceScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-        },
-        timeScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            timeVisible: true,
-        },
+        }
     });
+}
     
     // Make responsive
     window.addEventListener('resize', () => {
