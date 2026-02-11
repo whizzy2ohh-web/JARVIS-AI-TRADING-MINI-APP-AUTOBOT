@@ -1,10 +1,12 @@
-// ==================== JARVIS AI TRADING STRATEGY - FIXED V5 ====================
-// With CHoCH support for better signal generation (matches Pine Script exactly)
+// ==================== JARVIS AI TRADING STRATEGY V2 ====================
+// Converted from Pine Script to JavaScript with Trade Tracking
 
 class TradingStrategy {
     constructor() {
-        this.tradingStyle = 'day';
+        // Current trading style
+        this.tradingStyle = 'day'; // 'day', 'swing', or 'scalp'
         
+        // Base configuration for each trading style
         this.styleConfigs = {
             swing: {
                 swingLength: 7,
@@ -44,11 +46,15 @@ class TradingStrategy {
             }
         };
 
+        // Active configuration
         this.config = this.styleConfigs.day;
-        this.activeSignals = new Map();
+
+        // Trade tracking
+        this.activeSignals = new Map(); // Track active signals by symbol+timeframe
         this.tradeHistory = this.loadTradeHistory();
     }
 
+    // Switch trading style
     setTradingStyle(style) {
         if (this.styleConfigs[style]) {
             this.tradingStyle = style;
@@ -58,6 +64,7 @@ class TradingStrategy {
         return false;
     }
 
+    // Load trade history from localStorage
     loadTradeHistory() {
         try {
             const saved = localStorage.getItem('jarvis_trade_history');
@@ -68,6 +75,7 @@ class TradingStrategy {
         }
     }
 
+    // Save trade history to localStorage
     saveTradeHistory() {
         try {
             localStorage.setItem('jarvis_trade_history', JSON.stringify(this.tradeHistory));
@@ -76,25 +84,36 @@ class TradingStrategy {
         }
     }
 
+    // Add trade to history
     addTradeToHistory(trade) {
-        this.tradeHistory.unshift(trade);
+        this.tradeHistory.unshift(trade); // Add to beginning
+        // Keep only last 100 trades
         if (this.tradeHistory.length > 100) {
             this.tradeHistory = this.tradeHistory.slice(0, 100);
         }
         this.saveTradeHistory();
     }
 
+    // Get trade statistics
     getTradeStats() {
         const total = this.tradeHistory.length;
         const wins = this.tradeHistory.filter(t => t.result === 'win').length;
-        const losses = total - wins;
-        const winRate = total > 0 ? Math.round((wins / total) * 100) : 0;
+        const losses = this.tradeHistory.filter(t => t.result === 'loss').length;
         const tpHits = this.tradeHistory.filter(t => t.exitType === 'tp').length;
         const slHits = this.tradeHistory.filter(t => t.exitType === 'sl').length;
+        const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : 0;
 
-        return { total, wins, losses, winRate, tpHits, slHits };
+        return {
+            total,
+            wins,
+            losses,
+            tpHits,
+            slHits,
+            winRate
+        };
     }
 
+    // Filter trade history
     filterTradeHistory(filter) {
         switch (filter) {
             case 'wins':
@@ -110,110 +129,87 @@ class TradingStrategy {
         }
     }
 
+    // Check if active signal was hit (TP or SL)
     checkActiveSignal(symbol, timeframe, currentPrice) {
         const key = `${symbol}_${timeframe}`;
         const signal = this.activeSignals.get(key);
-        
+
         if (!signal) return null;
 
-        let closed = false;
-        let trade = null;
+        let exitType = null;
+        let result = null;
 
         if (signal.type === 'LONG') {
             if (currentPrice >= signal.takeProfit) {
-                closed = true;
-                trade = {
-                    symbol: signal.symbol,
-                    timeframe: signal.timeframe,
-                    type: signal.type,
-                    entry: signal.entry,
-                    exitPrice: signal.takeProfit,
-                    exitType: 'tp',
-                    result: 'win',
-                    pnl: `+${signal.rr}R`,
-                    entryTime: signal.entryTime,
-                    exitTime: new Date().toISOString(),
-                    tradingStyle: signal.tradingStyle
-                };
-            }
-            else if (currentPrice <= signal.stopLoss) {
-                closed = true;
-                trade = {
-                    symbol: signal.symbol,
-                    timeframe: signal.timeframe,
-                    type: signal.type,
-                    entry: signal.entry,
-                    exitPrice: signal.stopLoss,
-                    exitType: 'sl',
-                    result: 'loss',
-                    pnl: '-1R',
-                    entryTime: signal.entryTime,
-                    exitTime: new Date().toISOString(),
-                    tradingStyle: signal.tradingStyle
-                };
+                exitType = 'tp';
+                result = 'win';
+            } else if (currentPrice <= signal.stopLoss) {
+                exitType = 'sl';
+                result = 'loss';
             }
         } else if (signal.type === 'SHORT') {
             if (currentPrice <= signal.takeProfit) {
-                closed = true;
-                trade = {
-                    symbol: signal.symbol,
-                    timeframe: signal.timeframe,
-                    type: signal.type,
-                    entry: signal.entry,
-                    exitPrice: signal.takeProfit,
-                    exitType: 'tp',
-                    result: 'win',
-                    pnl: `+${signal.rr}R`,
-                    entryTime: signal.entryTime,
-                    exitTime: new Date().toISOString(),
-                    tradingStyle: signal.tradingStyle
-                };
-            }
-            else if (currentPrice >= signal.stopLoss) {
-                closed = true;
-                trade = {
-                    symbol: signal.symbol,
-                    timeframe: signal.timeframe,
-                    type: signal.type,
-                    entry: signal.entry,
-                    exitPrice: signal.stopLoss,
-                    exitType: 'sl',
-                    result: 'loss',
-                    pnl: '-1R',
-                    entryTime: signal.entryTime,
-                    exitTime: new Date().toISOString(),
-                    tradingStyle: signal.tradingStyle
-                };
+                exitType = 'tp';
+                result = 'win';
+            } else if (currentPrice >= signal.stopLoss) {
+                exitType = 'sl';
+                result = 'loss';
             }
         }
 
-        if (closed && trade) {
+        if (exitType) {
+            // Signal was closed
+            const closedTrade = {
+                ...signal,
+                exitPrice: currentPrice,
+                exitType,
+                result,
+                exitTime: new Date().toISOString(),
+                pnl: this.calculatePnL(signal, currentPrice)
+            };
+
+            this.addTradeToHistory(closedTrade);
             this.activeSignals.delete(key);
-            this.addTradeToHistory(trade);
-            return { closed: true, trade };
+
+            return { closed: true, trade: closedTrade };
         }
 
-        return { closed: false, trade: null };
+        return { closed: false, signal };
     }
 
-    calculateSMA(candles, period) {
-        if (candles.length < period) return null;
-        const sum = candles.slice(-period).reduce((acc, c) => acc + c.close, 0);
+    // Calculate P&L for a trade
+    calculatePnL(signal, exitPrice) {
+        const risk = Math.abs(signal.entry - signal.stopLoss);
+        if (signal.type === 'LONG') {
+            const pnl = exitPrice - signal.entry;
+            return (pnl / risk).toFixed(2) + 'R';
+        } else {
+            const pnl = signal.entry - exitPrice;
+            return (pnl / risk).toFixed(2) + 'R';
+        }
+    }
+
+    // Calculate Simple Moving Average
+    calculateSMA(data, period) {
+        if (data.length < period) return null;
+        const slice = data.slice(-period);
+        const sum = slice.reduce((acc, val) => acc + val, 0);
         return sum / period;
     }
 
-    calculateRSI(candles, period = 14) {
-        if (candles.length < period + 1) return null;
+    // Calculate RSI (Relative Strength Index)
+    calculateRSI(closes, period = 14) {
+        if (closes.length < period + 1) return null;
 
         let gains = 0;
         let losses = 0;
 
-        for (let i = candles.length - period; i < candles.length; i++) {
-            const change = candles[i].close - candles[i - 1].close;
+        for (let i = closes.length - period; i < closes.length; i++) {
+            const change = closes[i] - closes[i - 1];
             if (change > 0) {
                 gains += change;
             } else {
-                losses -= change;
+                losses += Math.abs(change);
             }
         }
 
@@ -228,153 +224,160 @@ class TradingStrategy {
         return rsi;
     }
 
+    // Calculate ATR (Average True Range)
     calculateATR(candles, period = 14) {
         if (candles.length < period + 1) return null;
 
-        let tr = 0;
+        const trueRanges = [];
         for (let i = candles.length - period; i < candles.length; i++) {
             const high = candles[i].high;
             const low = candles[i].low;
             const prevClose = candles[i - 1].close;
 
-            const tr1 = high - low;
-            const tr2 = Math.abs(high - prevClose);
-            const tr3 = Math.abs(low - prevClose);
-
-            tr += Math.max(tr1, tr2, tr3);
+            const tr = Math.max(
+                high - low,
+                Math.abs(high - prevClose),
+                Math.abs(low - prevClose)
+            );
+            trueRanges.push(tr);
         }
 
-        return tr / period;
+        return trueRanges.reduce((a, b) => a + b, 0) / trueRanges.length;
     }
 
+    // Find Pivot Highs
     findPivotHigh(candles, length) {
         if (candles.length < length * 2 + 1) return null;
-        
-        const centerIndex = candles.length - length - 1;
-        const centerHigh = candles[centerIndex].high;
-        
-        for (let i = centerIndex - length; i <= centerIndex + length; i++) {
-            if (i === centerIndex) continue;
-            if (candles[i].high >= centerHigh) return null;
+
+        const index = candles.length - length - 1;
+        const pivotCandle = candles[index];
+
+        for (let i = 1; i <= length; i++) {
+            if (candles[index - i].high >= pivotCandle.high ||
+                candles[index + i].high >= pivotCandle.high) {
+                return null;
+            }
         }
-        
-        return centerHigh;
+
+        return pivotCandle.high;
     }
 
+    // Find Pivot Lows
     findPivotLow(candles, length) {
         if (candles.length < length * 2 + 1) return null;
-        
-        const centerIndex = candles.length - length - 1;
-        const centerLow = candles[centerIndex].low;
-        
-        for (let i = centerIndex - length; i <= centerIndex + length; i++) {
-            if (i === centerIndex) continue;
-            if (candles[i].low <= centerLow) return null;
+
+        const index = candles.length - length - 1;
+        const pivotCandle = candles[index];
+
+        for (let i = 1; i <= length; i++) {
+            if (candles[index - i].low <= pivotCandle.low ||
+                candles[index + i].low <= pivotCandle.low) {
+                return null;
+            }
         }
-        
-        return centerLow;
+
+        return pivotCandle.low;
     }
 
+    // Detect Fair Value Gap (Bullish)
     detectBullishFVG(candles) {
         if (candles.length < 3) return null;
-        
+
         const current = candles[candles.length - 1];
-        const candle2 = candles[candles.length - 3];
-        
-        if (current.low > candle2.high) {
-            const gapSize = ((current.low - candle2.high) / candle2.high) * 100;
+        const prev2 = candles[candles.length - 3];
+
+        if (current.low > prev2.high) {
+            const gapSize = ((current.low - prev2.high) / prev2.high) * 100;
             if (gapSize >= this.config.fvgMinSize) {
                 return {
                     top: current.low,
-                    bottom: candle2.high,
+                    bottom: prev2.high,
                     size: gapSize
                 };
             }
         }
-        
         return null;
     }
 
+    // Detect Fair Value Gap (Bearish)
     detectBearishFVG(candles) {
         if (candles.length < 3) return null;
-        
+
         const current = candles[candles.length - 1];
-        const candle2 = candles[candles.length - 3];
-        
-        if (current.high < candle2.low) {
-            const gapSize = ((candle2.low - current.high) / candle2.low) * 100;
+        const prev2 = candles[candles.length - 3];
+
+        if (current.high < prev2.low) {
+            const gapSize = ((prev2.low - current.high) / prev2.low) * 100;
             if (gapSize >= this.config.fvgMinSize) {
                 return {
-                    top: candle2.low,
+                    top: prev2.low,
                     bottom: current.high,
                     size: gapSize
                 };
             }
         }
-        
         return null;
     }
 
+    // Detect Bullish Order Block
     detectBullishOB(candles, lookback) {
         if (candles.length < lookback + 1) return null;
-        
+
         const current = candles[candles.length - 1];
         
         for (let i = 1; i <= lookback; i++) {
             const candle = candles[candles.length - 1 - i];
-            const isBearish = candle.close < candle.open;
-            const bullishMove = current.close > candle.close && current.close > current.open;
             
-            if (isBearish && bullishMove) {
+            if (candle.close < candle.open &&
+                current.close > candle.close &&
+                current.close > current.open) {
+                
                 return {
                     top: candle.high,
                     bottom: candle.low
                 };
             }
         }
-        
         return null;
     }
 
+    // Detect Bearish Order Block
     detectBearishOB(candles, lookback) {
         if (candles.length < lookback + 1) return null;
-        
+
         const current = candles[candles.length - 1];
         
         for (let i = 1; i <= lookback; i++) {
             const candle = candles[candles.length - 1 - i];
-            const isBullish = candle.close > candle.open;
-            const bearishMove = current.close < candle.close && current.close < current.open;
             
-            if (isBullish && bearishMove) {
+            if (candle.close > candle.open &&
+                current.close < candle.close &&
+                current.close < current.open) {
+                
                 return {
                     top: candle.high,
                     bottom: candle.low
                 };
             }
         }
-        
         return null;
     }
 
+    // Analyze Market Structure and Generate Signals
     analyzeMarket(candles, symbol, timeframe) {
-        if (!candles || candles.length < 50) {
-            return {
-                marketTrend: 'INSUFFICIENT DATA',
-                trendClass: 'neutral-trend',
-                rsi: '--',
-                signal: null,
-                currentPrice: 0,
-                signalCheck: null,
-                activeSignal: null
-            };
+        if (!candles || candles.length < 100) {
+            return { error: 'Insufficient data' };
         }
 
-        const trendMA = this.calculateSMA(candles, this.config.trendMAPeriod);
-        const rsi = this.calculateRSI(candles, this.config.rsiPeriod);
-        const atr = this.calculateATR(candles, this.config.atrPeriod);
         const currentCandle = candles[candles.length - 1];
+        const closes = candles.map(c => c.close);
 
+        // Calculate indicators
+        const trendMA = this.calculateSMA(closes, this.config.trendMAPeriod);
+        const rsi = this.calculateRSI(closes, this.config.rsiPeriod);
+        const atr = this.calculateATR(candles, this.config.atrPeriod);
+
+        // Market trend analysis
         let marketTrend = 'NEUTRAL';
         let trendClass = 'neutral-trend';
         
@@ -386,34 +389,29 @@ class TradingStrategy {
             trendClass = 'bearish-trend';
         }
 
+        // Find swing points
         const lastSwingHigh = this.findPivotHigh(candles, this.config.swingLength);
         const lastSwingLow = this.findPivotLow(candles, this.config.swingLength);
 
-        // CRITICAL FIX: Add CHoCH (Change of Character) - more lenient than BOS
+        // Detect structure breaks
         let bullishBOS = false;
         let bearishBOS = false;
-        let bullishCHoCH = false;
-        let bearishCHoCH = false;
 
         if (lastSwingHigh) {
-            // BOS: Break with threshold
             bullishBOS = currentCandle.close > lastSwingHigh * (1 + this.config.bos_threshold / 100);
-            // CHoCH: Simple break (Pine Script logic)
-            bullishCHoCH = currentCandle.close > lastSwingHigh;
         }
 
         if (lastSwingLow) {
-            // BOS: Break with threshold
             bearishBOS = currentCandle.close < lastSwingLow * (1 - this.config.bos_threshold / 100);
-            // CHoCH: Simple break (Pine Script logic)
-            bearishCHoCH = currentCandle.close < lastSwingLow;
         }
 
+        // Detect zones
         const bullishFVG = this.detectBullishFVG(candles);
         const bearishFVG = this.detectBearishFVG(candles);
         const bullishOB = this.detectBullishOB(candles, this.config.obLookback);
         const bearishOB = this.detectBearishOB(candles, this.config.obLookback);
 
+        // Check for pullback into zones
         const longInFVG = bullishFVG && 
                           currentCandle.low <= bullishFVG.top && 
                           currentCandle.high >= bullishFVG.bottom;
@@ -430,20 +428,14 @@ class TradingStrategy {
                           currentCandle.high >= bearishOB.bottom && 
                           currentCandle.low <= bearishOB.top;
 
-        // CRITICAL FIX: Use BOS OR CHoCH (matches Pine Script exactly)
-        const longStructure = bullishBOS || bullishCHoCH;
-        const shortStructure = bearishBOS || bearishCHoCH;
-        
-        const longPullback = longInFVG || longInOB;
-        const shortPullback = shortInFVG || shortInOB;
-
-        const longSignal = longStructure && longPullback;
-        const shortSignal = shortStructure && shortPullback;
+        // Generate signals
+        const longSignal = bullishBOS && (longInFVG || longInOB);
+        const shortSignal = bearishBOS && (shortInFVG || shortInOB);
 
         let signal = null;
         const key = `${symbol}_${timeframe}`;
 
-        if (longSignal && atr) {
+        if (longSignal) {
             const entryPrice = currentCandle.close;
             const stopLoss = entryPrice - (atr * this.config.stopLossATR);
             const riskAmount = entryPrice - stopLoss;
@@ -464,8 +456,9 @@ class TradingStrategy {
                 tradingStyle: this.tradingStyle
             };
 
+            // Store active signal
             this.activeSignals.set(key, signal);
-        } else if (shortSignal && atr) {
+        } else if (shortSignal) {
             const entryPrice = currentCandle.close;
             const stopLoss = entryPrice + (atr * this.config.stopLossATR);
             const riskAmount = stopLoss - entryPrice;
@@ -486,9 +479,11 @@ class TradingStrategy {
                 tradingStyle: this.tradingStyle
             };
 
+            // Store active signal
             this.activeSignals.set(key, signal);
         }
 
+        // Check if existing signal was hit
         const signalCheck = this.checkActiveSignal(symbol, timeframe, currentCandle.close);
 
         return {
@@ -502,10 +497,12 @@ class TradingStrategy {
         };
     }
 
+    // Clear all trade history
     clearHistory() {
         this.tradeHistory = [];
         this.saveTradeHistory();
     }
 }
 
+// Export for use in app.js
 window.TradingStrategy = TradingStrategy;
