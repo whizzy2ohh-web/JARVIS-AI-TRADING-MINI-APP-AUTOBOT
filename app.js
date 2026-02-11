@@ -309,21 +309,28 @@ function initializeChart() {
     container.innerHTML = '';
     
     // Create chart
-    function initializeChart() {
-    const container = document.getElementById('chart-container');
-    if (!container) return;
-    
-    container.innerHTML = ''; // Clear first
-    
     appState.chart = LightweightCharts.createChart(container, {
         width: container.clientWidth,
         height: 400,
         layout: {
             background: { color: '#1a1f35' },
             textColor: '#a8b3cf',
-        }
+        },
+        grid: {
+            vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+            horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+        },
+        timeScale: {
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            timeVisible: true,
+        },
     });
-}
     
     // Make responsive
     window.addEventListener('resize', () => {
@@ -1014,8 +1021,8 @@ async function initializeApp() {
         // Load all trading pairs
         await fetchAllTradingPairs();
         
-        // Initialize music
-        initializeMusic();
+        // Initialize fixed music system
+        initializeMusicFixed();
         
         // Initialize chart
         initializeChart();
@@ -1035,9 +1042,14 @@ async function initializeApp() {
         // Update sentiment every 5 minutes
         setInterval(updateMarketSentiment, 5 * 60 * 1000);
         
+        // Initialize V5 features
+        initializeFeedbackSystem();
+        initializeExchangeIntegration();
+        initializeCustomStrategy();
+        
         tg.MainButton.hide();
         
-        console.log('JARVIS AI V3 initialized successfully');
+        console.log('JARVIS AI V5 initialized successfully');
     } catch (error) {
         console.error('Initialization error:', error);
     }
@@ -1061,43 +1073,172 @@ if (document.readyState === 'loading') {
 } else {
     initializeApp();
 }
+// ==================== NEW V5 FEATURES ====================
 
-document.getElementById('feedback-submit').addEventListener('click', () => {
-    const rating = selectedStars;
-    const message = document.getElementById('feedback-message').value;
-    
-    // Open Telegram group
-    window.open('https://t.me/HUNTERSECOSYSTEMX', '_blank');
-    
-    // Show confirmation
-    alert(`Thank you for your ${rating}-star feedback!`);
-});
+// ==================== FEEDBACK SYSTEM ====================
 
-// Simple falling coins game
-const game = {
-    player: { x: 150, y: 350, width: 40, height: 40 },
-    coins: [],
-    score: 0,
-    
-    update() {
-        // Move coins down
-        this.coins.forEach(coin => {
-            coin.y += coin.speed;
+function initializeFeedbackSystem() {
+    const stars = document.querySelectorAll('.star');
+    const ratingText = document.getElementById('rating-text');
+    const submitBtn = document.getElementById('feedback-submit');
+    let selectedRating = 0;
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            selectedRating = parseInt(star.dataset.rating);
             
-            // Check collision
-            if (this.checkCollision(coin)) {
-                this.score++;
-                collectSound.play();
-            }
+            // Update stars display
+            stars.forEach((s, index) => {
+                if (index < selectedRating) {
+                    s.style.opacity = '1';
+                    s.style.transform = 'scale(1.2)';
+                } else {
+                    s.style.opacity = '0.3';
+                    s.style.transform = 'scale(1)';
+                }
+            });
+            
+            // Update text
+            const ratingTexts = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+            ratingText.textContent = ratingTexts[selectedRating - 1] || 'Click to rate';
         });
-    },
+    });
+
+    submitBtn.addEventListener('click', () => {
+        const message = document.getElementById('feedback-message').value;
+        
+        if (selectedRating === 0) {
+            alert('Please select a rating!');
+            return;
+        }
+        
+        if (!message.trim()) {
+            alert('Please enter your feedback!');
+            return;
+        }
+        
+        // Open Telegram group
+        window.open('https://t.me/HUNTERSECOSYSTEMX', '_blank');
+        
+        // Show confirmation
+        alert(`Thank you for your ${selectedRating}-star feedback! Redirecting to our Telegram community...`);
+        
+        // Clear form
+        document.getElementById('feedback-message').value = '';
+        selectedRating = 0;
+        stars.forEach(s => {
+            s.style.opacity = '0.3';
+            s.style.transform = 'scale(1)';
+        });
+        ratingText.textContent = 'Click to rate';
+    });
+}
+
+// ==================== EXCHANGE INTEGRATION ====================
+
+function initializeExchangeIntegration() {
+    const exchangeCards = document.querySelectorAll('.exchange-card');
     
-    checkCollision(coin) {
-        return (
-            this.player.x < coin.x + coin.width &&
-            this.player.x + this.player.width > coin.x &&
-            this.player.y < coin.y + coin.height &&
-            this.player.y + this.player.height > coin.y
-        );
+    exchangeCards.forEach(card => {
+        const connectBtn = card.querySelector('.exchange-connect-btn');
+        const exchange = card.dataset.exchange;
+        
+        connectBtn.addEventListener('click', () => {
+            alert(`Exchange integration for ${exchange.toUpperCase()} requires backend API implementation.\n\nThis is a UI demonstration. For full integration, contact support.`);
+        });
+    });
+}
+
+// ==================== CUSTOM STRATEGY ====================
+
+function initializeCustomStrategy() {
+    const saveBtn = document.getElementById('custom-save');
+    const enableToggle = document.getElementById('custom-enable');
+    
+    // Load saved strategy
+    loadCustomStrategy();
+    
+    saveBtn.addEventListener('click', () => {
+        const customStrategy = {
+            enabled: enableToggle.checked,
+            description: document.getElementById('custom-description').value,
+            entry: document.getElementById('custom-entry').value,
+            stopLoss: parseFloat(document.getElementById('custom-sl').value) || 0,
+            takeProfit: parseFloat(document.getElementById('custom-tp').value) || 0
+        };
+        
+        if (!customStrategy.description.trim()) {
+            alert('Please enter a strategy description!');
+            return;
+        }
+        
+        try {
+            localStorage.setItem('jarvis_custom_strategy', JSON.stringify(customStrategy));
+            alert('Custom strategy saved successfully!');
+        } catch (error) {
+            console.error('Error saving custom strategy:', error);
+            alert('Failed to save custom strategy.');
+        }
+    });
+}
+
+function loadCustomStrategy() {
+    try {
+        const saved = localStorage.getItem('jarvis_custom_strategy');
+        if (saved) {
+            const strategy = JSON.parse(saved);
+            document.getElementById('custom-enable').checked = strategy.enabled || false;
+            document.getElementById('custom-description').value = strategy.description || '';
+            document.getElementById('custom-entry').value = strategy.entry || '';
+            document.getElementById('custom-sl').value = strategy.stopLoss || '';
+            document.getElementById('custom-tp').value = strategy.takeProfit || '';
+        }
+    } catch (error) {
+        console.error('Error loading custom strategy:', error);
     }
-};
+}
+
+// ==================== IMPROVED AUDIO HANDLING ====================
+
+function initializeMusicFixed() {
+    const musicToggle = document.getElementById('music-toggle');
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    const bgMusic = document.getElementById('background-music');
+    
+    // Load saved preferences
+    const savedEnabled = localStorage.getItem('jarvis_music_enabled') === 'true';
+    const savedVolume = parseFloat(localStorage.getItem('jarvis_music_volume')) || 0.5;
+    
+    musicToggle.checked = savedEnabled;
+    volumeSlider.value = savedVolume * 100;
+    volumeValue.textContent = Math.round(savedVolume * 100) + '%';
+    bgMusic.volume = savedVolume;
+    
+    if (savedEnabled) {
+        bgMusic.play().catch(() => {
+            console.log('Autoplay blocked - user interaction required');
+        });
+    }
+    
+    musicToggle.addEventListener('change', () => {
+        const enabled = musicToggle.checked;
+        localStorage.setItem('jarvis_music_enabled', enabled);
+        
+        if (enabled) {
+            bgMusic.play().catch(() => {
+                alert('Please interact with the page first to enable audio');
+            });
+        } else {
+            bgMusic.pause();
+        }
+    });
+    
+    volumeSlider.addEventListener('input', () => {
+        const volume = volumeSlider.value / 100;
+        bgMusic.volume = volume;
+        volumeValue.textContent = volumeSlider.value + '%';
+        localStorage.setItem('jarvis_music_volume', volume);
+    });
+}
+
