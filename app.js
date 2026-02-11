@@ -1061,3 +1061,14 @@ if (document.readyState === 'loading') {
 } else {
     initializeApp();
 }
+
+document.getElementById('feedback-submit').addEventListener('click', () => {
+    const rating = selectedStars;
+    const message = document.getElementById('feedback-message').value;
+    
+    // Open Telegram group
+    window.open('https://t.me/HUNTERSECOSYSTEMX', '_blank');
+    
+    // Show confirmation
+    alert(`Thank you for your ${rating}-star feedback!`);
+});
