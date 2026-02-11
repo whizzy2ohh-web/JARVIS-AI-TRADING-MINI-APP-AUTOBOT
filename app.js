@@ -1,4 +1,4 @@
-// ==================== JARVIS AI TELEGRAM MINI APP V2 - FIXED ====================
+// ==================== JARVIS AI TELEGRAM MINI APP V3 - ULTIMATE ====================
 
 // Initialize Telegram Web App
 const tg = window.Telegram.WebApp;
@@ -18,10 +18,213 @@ const appState = {
     strategy: new TradingStrategy(),
     refreshInterval: 30,
     refreshTimer: null,
-    autoTrack: true
+    autoTrack: true,
+    allPairs: [],
+    filteredPairs: [],
+    favorites: [],
+    currentFilter: 'favorites',
+    chart: null,
+    currentExplanation: null,
+    musicEnabled: false,
+    musicVolume: 0.5
 };
 
-// ==================== BINANCE API INTEGRATION ====================
+// ==================== BINANCE API - FETCH ALL PAIRS ====================
+
+async function fetchAllTradingPairs() {
+    try {
+        const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+        const data = await response.json();
+        
+        // Filter for USDT pairs only and active symbols
+        const usdtPairs = data.symbols
+            .filter(s => s.symbol.endsWith('USDT') && s.status === 'TRADING')
+            .map(s => ({
+                symbol: s.symbol,
+                baseAsset: s.baseAsset,
+                name: s.baseAsset,
+                isFavorite: false
+            }));
+        
+        appState.allPairs = usdtPairs;
+        
+        // Load favorites from storage
+        loadFavorites();
+        
+        // Display initial pairs
+        filterPairs('favorites');
+        
+        console.log(`Loaded ${usdtPairs.length} trading pairs`);
+        return usdtPairs;
+    } catch (error) {
+        console.error('Error fetching trading pairs:', error);
+        return [];
+    }
+}
+
+// ==================== FAVORITES MANAGEMENT ====================
+
+function loadFavorites() {
+    try {
+        const saved = localStorage.getItem('jarvis_favorites');
+        const favoriteSymbols = saved ? JSON.parse(saved) : ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'SOLUSDT', 'ADAUSDT'];
+        
+        appState.favorites = favoriteSymbols;
+        
+        // Mark favorites in allPairs
+        appState.allPairs.forEach(pair => {
+            pair.isFavorite = favoriteSymbols.includes(pair.symbol);
+        });
+    } catch (error) {
+        console.error('Error loading favorites:', error);
+        appState.favorites = ['BTCUSDT', 'ETHUSDT', 'XRPUSDT', 'SOLUSDT', 'ADAUSDT'];
+    }
+}
+
+function saveFavorites() {
+    try {
+        localStorage.setItem('jarvis_favorites', JSON.stringify(appState.favorites));
+    } catch (error) {
+        console.error('Error saving favorites:', error);
+    }
+}
+
+function toggleFavorite(symbol) {
+    const index = appState.favorites.indexOf(symbol);
+    
+    if (index > -1) {
+        // Remove from favorites
+        appState.favorites.splice(index, 1);
+    } else {
+        // Add to favorites
+        appState.favorites.push(symbol);
+    }
+    
+    // Update pair object
+    const pair = appState.allPairs.find(p => p.symbol === symbol);
+    if (pair) {
+        pair.isFavorite = !pair.isFavorite;
+    }
+    
+    saveFavorites();
+    
+    // Update favorite button
+    updateFavoriteButton();
+    
+    // Refresh display if on favorites filter
+    if (appState.currentFilter === 'favorites') {
+        filterPairs('favorites');
+    }
+}
+
+function updateFavoriteButton() {
+    const favoriteBtn = document.getElementById('favorite-btn');
+    const isFavorite = appState.favorites.includes(appState.currentSymbol);
+    
+    if (isFavorite) {
+        favoriteBtn.classList.add('active');
+    } else {
+        favoriteBtn.classList.remove('active');
+    }
+}
+
+// ==================== PAIR FILTERING & SEARCH ====================
+
+function filterPairs(filter) {
+    appState.currentFilter = filter;
+    
+    let filtered = [];
+    
+    switch (filter) {
+        case 'favorites':
+            filtered = appState.allPairs.filter(p => p.isFavorite);
+            break;
+        case 'top':
+            // Top 20 by market cap (approximate using common coins)
+            const topSymbols = ['BTC', 'ETH', 'BNB', 'SOL', 'XRP', 'ADA', 'DOGE', 'AVAX', 'DOT', 'MATIC', 
+                               'LINK', 'UNI', 'LTC', 'ATOM', 'ETC', 'XLM', 'NEAR', 'ALGO', 'FIL', 'APT'];
+            filtered = appState.allPairs.filter(p => topSymbols.includes(p.baseAsset));
+            break;
+        case 'defi':
+            const defiTokens = ['UNI', 'AAVE', 'LINK', 'SNX', 'MKR', 'COMP', 'CRV', 'SUSHI', 'YFI', 
+                               'BAL', 'LDO', 'GMX', 'DYDX', 'RUNE', 'CAKE'];
+            filtered = appState.allPairs.filter(p => defiTokens.includes(p.baseAsset));
+            break;
+        case 'meme':
+            const memeTokens = ['DOGE', 'SHIB', 'PEPE', 'FLOKI', 'BONK', 'WIF', 'MEME', 'LADYS'];
+            filtered = appState.allPairs.filter(p => memeTokens.includes(p.baseAsset));
+            break;
+        case 'all':
+        default:
+            filtered = appState.allPairs;
+            break;
+    }
+    
+    appState.filteredPairs = filtered;
+    displayPairs(filtered);
+}
+
+function searchPairs(query) {
+    if (!query || query.trim() === '') {
+        filterPairs(appState.currentFilter);
+        return;
+    }
+    
+    const searchTerm = query.toLowerCase().trim();
+    const filtered = appState.allPairs.filter(pair => 
+        pair.baseAsset.toLowerCase().includes(searchTerm) ||
+        pair.symbol.toLowerCase().includes(searchTerm)
+    );
+    
+    appState.filteredPairs = filtered;
+    displayPairs(filtered);
+}
+
+function displayPairs(pairs) {
+    const container = document.getElementById('crypto-assets');
+    const countElement = document.getElementById('asset-count');
+    
+    if (pairs.length === 0) {
+        container.innerHTML = `
+            <div class="loading-state">
+                <p>No pairs found</p>
+            </div>
+        `;
+        countElement.textContent = '0 pairs';
+        return;
+    }
+    
+    countElement.textContent = `${pairs.length} pair${pairs.length !== 1 ? 's' : ''}`;
+    
+    container.innerHTML = pairs.map(pair => `
+        <button class="asset-card ${pair.symbol === appState.currentSymbol ? 'active' : ''} ${pair.isFavorite ? 'favorited' : ''}" 
+                data-symbol="${pair.symbol}" 
+                data-name="${pair.baseAsset}">
+            <div class="asset-symbol">${pair.baseAsset}</div>
+            <div class="asset-name">${pair.symbol}</div>
+        </button>
+    `).join('');
+    
+    // Add click handlers
+    document.querySelectorAll('.asset-card').forEach(card => {
+        card.addEventListener('click', async () => {
+            document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+            card.classList.add('active');
+            
+            appState.currentSymbol = card.dataset.symbol;
+            appState.currentAssetName = card.dataset.name;
+            
+            updateFavoriteButton();
+            await analyzeCurrentAsset();
+            
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+        });
+    });
+}
+
+// ==================== BINANCE API - PRICE DATA ====================
 
 async function fetchKlines(symbol, interval, limit = 200) {
     const baseUrl = 'https://api.binance.com/api/v3/klines';
@@ -40,7 +243,8 @@ async function fetchKlines(symbol, interval, limit = 200) {
             high: parseFloat(candle[2]),
             low: parseFloat(candle[3]),
             close: parseFloat(candle[4]),
-            volume: parseFloat(candle[5])
+            volume: parseFloat(candle[5]),
+            time: candle[0] / 1000 // Convert to seconds for TradingView
         }));
     } catch (error) {
         console.error(`Error fetching ${symbol}:`, error);
@@ -61,14 +265,341 @@ async function fetchCurrentPrice(symbol) {
     }
 }
 
+// ==================== MARKET SENTIMENT ====================
+
+async function updateMarketSentiment() {
+    try {
+        // Fetch 24h stats for BTC
+        const btcStats = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+        const btcData = await btcStats.json();
+        
+        // Calculate simple Fear & Greed based on price change
+        const priceChange = parseFloat(btcData.priceChangePercent);
+        let sentiment = 'NEUTRAL';
+        if (priceChange > 5) sentiment = 'EXTREME GREED';
+        else if (priceChange > 2) sentiment = 'GREED';
+        else if (priceChange < -5) sentiment = 'EXTREME FEAR';
+        else if (priceChange < -2) sentiment = 'FEAR';
+        
+        document.getElementById('fear-greed').textContent = sentiment;
+        document.getElementById('fear-greed').style.color = priceChange > 0 ? 'var(--cyber-green)' : 'var(--cyber-red)';
+        
+        // Total 24h volume
+        const volume = (parseFloat(btcData.quoteVolume) / 1000000000).toFixed(2);
+        document.getElementById('total-volume').textContent = `$${volume}B`;
+        
+        // BTC Dominance (simplified - would need total market cap)
+        document.getElementById('btc-dominance').textContent = '~52%';
+        
+    } catch (error) {
+        console.error('Error fetching market sentiment:', error);
+        document.getElementById('fear-greed').textContent = 'N/A';
+        document.getElementById('total-volume').textContent = 'N/A';
+        document.getElementById('btc-dominance').textContent = 'N/A';
+    }
+}
+
+// ==================== CHART FUNCTIONALITY ====================
+
+function initializeChart() {
+    const container = document.getElementById('chart-container');
+    if (!container) return;
+    
+    // Clear loading state
+    container.innerHTML = '';
+    
+    // Create chart
+    appState.chart = LightweightCharts.createChart(container, {
+        width: container.clientWidth,
+        height: 400,
+        layout: {
+            background: { color: '#1a1f35' },
+            textColor: '#a8b3cf',
+        },
+        grid: {
+            vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
+            horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+        },
+        timeScale: {
+            borderColor: 'rgba(255, 255, 255, 0.1)',
+            timeVisible: true,
+        },
+    });
+    
+    // Make responsive
+    window.addEventListener('resize', () => {
+        if (appState.chart) {
+            appState.chart.applyOptions({ width: container.clientWidth });
+        }
+    });
+}
+
+async function updateChart(candles, signal) {
+    if (!appState.chart) {
+        initializeChart();
+    }
+    
+    if (!candles || candles.length === 0) return;
+    
+    // Update chart info
+    document.getElementById('chart-asset').textContent = `${appState.currentAssetName}/USDT`;
+    document.getElementById('chart-tf').textContent = appState.currentTimeframe.toUpperCase();
+    
+    // Clear existing series
+    const chartContainer = document.getElementById('chart-container');
+    chartContainer.innerHTML = '';
+    initializeChart();
+    
+    // Add candlestick series
+    const candleSeries = appState.chart.addCandlestickSeries({
+        upColor: '#00ff88',
+        downColor: '#ff0055',
+        borderUpColor: '#00ff88',
+        borderDownColor: '#ff0055',
+        wickUpColor: '#00ff88',
+        wickDownColor: '#ff0055',
+    });
+    
+    candleSeries.setData(candles.map(c => ({
+        time: c.time,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
+    })));
+    
+    // Add signal markers if signal exists
+    if (signal) {
+        const lastCandle = candles[candles.length - 1];
+        
+        // Entry line
+        const entryLine = appState.chart.addLineSeries({
+            color: '#ffed00',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            title: 'Entry',
+        });
+        entryLine.setData([
+            { time: candles[candles.length - 20].time, value: signal.entry },
+            { time: lastCandle.time, value: signal.entry }
+        ]);
+        
+        // Stop Loss line
+        const slLine = appState.chart.addLineSeries({
+            color: '#ff0055',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            title: 'Stop Loss',
+        });
+        slLine.setData([
+            { time: candles[candles.length - 20].time, value: signal.stopLoss },
+            { time: lastCandle.time, value: signal.stopLoss }
+        ]);
+        
+        // Take Profit line
+        const tpLine = appState.chart.addLineSeries({
+            color: '#00f7ff',
+            lineWidth: 2,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            title: 'Take Profit',
+        });
+        tpLine.setData([
+            { time: candles[candles.length - 20].time, value: signal.takeProfit },
+            { time: lastCandle.time, value: signal.takeProfit }
+        ]);
+    }
+    
+    appState.chart.timeScale().fitContent();
+}
+
+// ==================== EXPLANATION GENERATION ====================
+
+function generateExplanation(analysis, signal) {
+    if (!signal) {
+        appState.currentExplanation = null;
+        return;
+    }
+    
+    const explanation = {
+        signal: signal,
+        reasoning: {
+            marketStructure: generateMarketStructureReason(analysis, signal),
+            entryZone: generateEntryZoneReason(signal),
+            riskManagement: generateRiskManagementReason(signal),
+            confluence: generateConfluenceReason(analysis, signal)
+        }
+    };
+    
+    appState.currentExplanation = explanation;
+    displayExplanation(explanation);
+}
+
+function generateMarketStructureReason(analysis, signal) {
+    const trend = analysis.marketTrend;
+    const type = signal.type;
+    
+    if (type === 'LONG') {
+        return `Market structure is ${trend.toLowerCase()}, indicating bullish momentum. Price has broken above a significant swing high, confirming the uptrend and creating a Break of Structure (BOS). This validates our long entry opportunity.`;
+    } else {
+        return `Market structure is ${trend.toLowerCase()}, showing bearish momentum. Price has broken below a key swing low, creating a Break of Structure (BOS) to the downside. This confirms the bearish trend and validates our short entry.`;
+    }
+}
+
+function generateEntryZoneReason(signal) {
+    const zone = signal.zone;
+    
+    if (zone === 'FVG') {
+        return `Entry is based on a Fair Value Gap (FVG), which is an imbalance in price where the market moved too quickly, leaving a gap. Price has pulled back into this gap at $${signal.entry.toFixed(4)}, creating an optimal entry opportunity as the gap gets filled.`;
+    } else {
+        return `Entry is based on an Order Block (OB), which represents institutional buying/selling interest. This zone at $${signal.entry.toFixed(4)} is where smart money previously entered, making it a high-probability area for the trend to continue.`;
+    }
+}
+
+function generateRiskManagementReason(signal) {
+    return `Stop loss is placed at $${signal.stopLoss.toFixed(4)}, which is beyond the entry zone plus ATR-based buffer. This protects us if the analysis is wrong. Take profit is set at $${signal.takeProfit.toFixed(4)}, giving us a ${signal.rr}:1 risk-to-reward ratio. This means we risk $1 to potentially make $${signal.rr}.`;
+}
+
+function generateConfluenceReason(analysis, signal) {
+    const factors = [];
+    
+    if (parseFloat(analysis.rsi) > 50 && signal.type === 'LONG') {
+        factors.push('RSI above 50 confirms bullish momentum');
+    } else if (parseFloat(analysis.rsi) < 50 && signal.type === 'SHORT') {
+        factors.push('RSI below 50 confirms bearish momentum');
+    }
+    
+    factors.push(`${appState.currentTimeframe.toUpperCase()} timeframe alignment`);
+    factors.push(`${signal.zone} entry zone confirmation`);
+    factors.push('Market structure break validated');
+    
+    return `Multiple factors align for this trade: ${factors.join(', ')}. This confluence increases the probability of success.`;
+}
+
+function displayExplanation(explanation) {
+    const container = document.getElementById('explanation-card');
+    
+    if (!explanation) {
+        container.innerHTML = `
+            <div class="explanation-empty">
+                <div class="empty-icon">🎯</div>
+                <p>No active signal</p>
+                <p class="empty-subtext">When a signal appears, the reasoning will be shown here</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const signal = explanation.signal;
+    const reasoning = explanation.reasoning;
+    
+    container.innerHTML = `
+        <div class="explanation-content">
+            <div class="explanation-header">
+                <span>${signal.type === 'LONG' ? '📈' : '📉'}</span>
+                <h3 class="explanation-title">${signal.type} SIGNAL - ${appState.currentAssetName}</h3>
+            </div>
+            
+            <div class="explanation-section-item">
+                <h4 class="explanation-subtitle">Market Structure</h4>
+                <p class="explanation-text">${reasoning.marketStructure}</p>
+            </div>
+            
+            <div class="explanation-section-item">
+                <h4 class="explanation-subtitle">Entry Zone</h4>
+                <p class="explanation-text">${reasoning.entryZone}</p>
+            </div>
+            
+            <div class="explanation-section-item">
+                <h4 class="explanation-subtitle">Risk Management</h4>
+                <p class="explanation-text">${reasoning.riskManagement}</p>
+            </div>
+            
+            <div class="explanation-section-item">
+                <h4 class="explanation-subtitle">Confluence Factors</h4>
+                <p class="explanation-text">${reasoning.confluence}</p>
+            </div>
+            
+            <div class="explanation-section-item">
+                <h4 class="explanation-subtitle">Key Levels</h4>
+                <ul class="explanation-points">
+                    <li>Entry: $${signal.entry.toFixed(4)}</li>
+                    <li>Stop Loss: $${signal.stopLoss.toFixed(4)}</li>
+                    <li>Take Profit: $${signal.takeProfit.toFixed(4)}</li>
+                    <li>Risk/Reward: 1:${signal.rr}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+// ==================== BACKGROUND MUSIC ====================
+
+function initializeMusic() {
+    const audio = document.getElementById('background-music');
+    const toggle = document.getElementById('music-toggle');
+    const volumeControl = document.getElementById('volume-control');
+    const volumeSlider = document.getElementById('volume-slider');
+    const volumeValue = document.getElementById('volume-value');
+    
+    // Load saved preferences
+    const savedMusicState = localStorage.getItem('jarvis_music_enabled');
+    const savedVolume = localStorage.getItem('jarvis_music_volume');
+    
+    if (savedMusicState === 'true') {
+        appState.musicEnabled = true;
+        toggle.checked = true;
+        volumeControl.classList.add('visible');
+    }
+    
+    if (savedVolume) {
+        appState.musicVolume = parseFloat(savedVolume);
+        volumeSlider.value = appState.musicVolume * 100;
+        volumeValue.textContent = `${Math.round(appState.musicVolume * 100)}%`;
+    }
+    
+    audio.volume = appState.musicVolume;
+    
+    // Toggle handler
+    toggle.addEventListener('change', (e) => {
+        appState.musicEnabled = e.target.checked;
+        localStorage.setItem('jarvis_music_enabled', appState.musicEnabled);
+        
+        if (appState.musicEnabled) {
+            audio.play().catch(err => console.log('Audio play failed:', err));
+            volumeControl.classList.add('visible');
+        } else {
+            audio.pause();
+            volumeControl.classList.remove('visible');
+        }
+    });
+    
+    // Volume handler
+    volumeSlider.addEventListener('input', (e) => {
+        const volume = e.target.value / 100;
+        appState.musicVolume = volume;
+        audio.volume = volume;
+        volumeValue.textContent = `${e.target.value}%`;
+        localStorage.setItem('jarvis_music_volume', volume);
+    });
+    
+    // Auto-play if enabled
+    if (appState.musicEnabled) {
+        audio.play().catch(err => console.log('Audio autoplay blocked:', err));
+    }
+}
+
 // ==================== UI UPDATE FUNCTIONS ====================
 
 function updateCurrentAnalysis(analysis, price) {
-    // Update symbol and timeframe
     document.getElementById('current-symbol').textContent = appState.currentAssetName;
     document.getElementById('current-timeframe').textContent = appState.currentTimeframe.toUpperCase();
     
-    // Update price
     if (price) {
         const decimals = price < 1 ? 4 : 2;
         document.getElementById('current-price').textContent = `$${price.toLocaleString('en-US', {
@@ -79,7 +610,6 @@ function updateCurrentAnalysis(analysis, price) {
 
     if (!analysis) return;
 
-    // Update metrics
     const trendElement = document.getElementById('metric-trend');
     trendElement.textContent = analysis.marketTrend;
     trendElement.className = `metric-value ${analysis.trendClass}`;
@@ -97,11 +627,8 @@ function updateCurrentAnalysis(analysis, price) {
         }
     }
 
-    // Update signal display
     const signalDisplay = document.getElementById('signal-display');
     const signalMetric = document.getElementById('metric-signal');
-
-    // Check for active signal first
     const activeSignal = analysis.activeSignal || analysis.signal;
 
     if (activeSignal) {
@@ -136,7 +663,9 @@ function updateCurrentAnalysis(analysis, price) {
             </div>
         `;
 
-        // Check if signal was closed
+        // Generate explanation
+        generateExplanation(analysis, activeSignal);
+
         if (analysis.signalCheck && analysis.signalCheck.closed) {
             showTradeClosedNotification(analysis.signalCheck.trade);
         }
@@ -150,6 +679,9 @@ function updateCurrentAnalysis(analysis, price) {
                 <p>Waiting for optimal entry...</p>
             </div>
         `;
+        
+        // Clear explanation
+        generateExplanation(null, null);
     }
 }
 
@@ -162,22 +694,19 @@ function showTradeClosedNotification(trade) {
         tg.showAlert(message);
     }
 
-    // Refresh history tab
     updateHistoryTab();
 }
 
-// ==================== HISTORY TAB FUNCTIONS ====================
+// ==================== HISTORY TAB ====================
 
 function updateHistoryTab() {
     const stats = appState.strategy.getTradeStats();
 
-    // Update stats
     document.getElementById('stat-total').textContent = stats.total;
     document.getElementById('stat-wins').textContent = stats.wins;
     document.getElementById('stat-losses').textContent = stats.losses;
     document.getElementById('stat-winrate').textContent = `${stats.winRate}%`;
 
-    // Update history list with current filter
     const activeFilter = document.querySelector('.filter-btn.active');
     const filter = activeFilter ? activeFilter.dataset.filter : 'all';
     displayTradeHistory(filter);
@@ -250,7 +779,7 @@ function createHistoryCard(trade) {
     `;
 }
 
-// ==================== DATA FETCHING & ANALYSIS ====================
+// ==================== ANALYSIS FUNCTION ====================
 
 async function analyzeCurrentAsset() {
     const symbol = appState.currentSymbol;
@@ -258,7 +787,6 @@ async function analyzeCurrentAsset() {
     const timeframe = appState.currentTimeframe;
 
     try {
-        // Show loading
         const signalDisplay = document.getElementById('signal-display');
         signalDisplay.innerHTML = `
             <div class="no-signal">
@@ -267,7 +795,6 @@ async function analyzeCurrentAsset() {
             </div>
         `;
 
-        // Fetch data
         const candles = await fetchKlines(symbol, interval);
         const price = await fetchCurrentPrice(symbol);
 
@@ -277,13 +804,10 @@ async function analyzeCurrentAsset() {
             return;
         }
 
-        // Analyze
         const analysis = appState.strategy.analyzeMarket(candles, symbol, timeframe);
         
-        // Update UI
         updateCurrentAnalysis(analysis, price);
-        
-        // Update last update time
+        updateChart(candles, analysis.signal || analysis.activeSignal);
         updateLastUpdateTime();
 
     } catch (error) {
@@ -293,47 +817,74 @@ async function analyzeCurrentAsset() {
 
 // ==================== EVENT HANDLERS ====================
 
-// Tab Navigation
-document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        const tabName = tab.dataset.tab;
-        
-        // Update tab buttons
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        
-        // Update tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        document.getElementById(`${tabName}-tab`).classList.add('active');
+// Search functionality
+const searchInput = document.getElementById('search-input');
+const searchClear = document.getElementById('search-clear');
 
-        // If switching to history, update it
-        if (tabName === 'history') {
-            updateHistoryTab();
-        }
+searchInput.addEventListener('input', (e) => {
+    const query = e.target.value;
+    
+    if (query.length > 0) {
+        searchClear.classList.add('visible');
+    } else {
+        searchClear.classList.remove('visible');
+    }
+    
+    searchPairs(query);
+});
 
-        // Haptic feedback
+searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchClear.classList.remove('visible');
+    filterPairs(appState.currentFilter);
+});
+
+// Quick filters
+document.querySelectorAll('.quick-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.quick-filter').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const filter = btn.dataset.filter;
+        searchInput.value = '';
+        searchClear.classList.remove('visible');
+        filterPairs(filter);
+        
         if (tg.HapticFeedback) {
             tg.HapticFeedback.impactOccurred('light');
         }
     });
 });
 
-// Asset Selection
-document.querySelectorAll('.asset-card').forEach(card => {
-    card.addEventListener('click', async () => {
-        // Update active state
-        document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
+// Favorite button
+document.getElementById('favorite-btn').addEventListener('click', () => {
+    toggleFavorite(appState.currentSymbol);
+    
+    if (tg.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred('medium');
+    }
+});
+
+// Tab Navigation
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
         
-        // Update app state
-        appState.currentSymbol = card.dataset.symbol;
-        appState.currentAssetName = card.dataset.name;
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
         
-        // Re-analyze
-        await analyzeCurrentAsset();
-        
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+
+        if (tabName === 'history') {
+            updateHistoryTab();
+        } else if (tabName === 'chart' && !appState.chart) {
+            initializeChart();
+            analyzeCurrentAsset();
+        }
+
         if (tg.HapticFeedback) {
             tg.HapticFeedback.impactOccurred('light');
         }
@@ -343,15 +894,12 @@ document.querySelectorAll('.asset-card').forEach(card => {
 // Timeframe Selection
 document.querySelectorAll('.tf-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
-        // Update active state
         document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
-        // Update timeframe
         appState.currentTimeframe = btn.dataset.timeframe;
         appState.currentInterval = btn.dataset.interval;
         
-        // Re-analyze
         await analyzeCurrentAsset();
         
         if (tg.HapticFeedback) {
@@ -367,6 +915,8 @@ const closeSettings = document.getElementById('close-settings');
 
 settingsBtn.addEventListener('click', () => {
     settingsModal.classList.add('active');
+    updateMarketSentiment();
+    
     if (tg.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('medium');
     }
@@ -385,15 +935,12 @@ settingsModal.addEventListener('click', (e) => {
 // Trading Style Selection
 document.querySelectorAll('.style-option').forEach(option => {
     option.addEventListener('click', () => {
-        // Update buttons
         document.querySelectorAll('.style-option').forEach(o => o.classList.remove('active'));
         option.classList.add('active');
         
-        // Update strategy
         const style = option.dataset.style;
         appState.strategy.setTradingStyle(style);
         
-        // Update display
         const styleNames = {
             'day': 'Day Trading',
             'swing': 'Swing Trading',
@@ -401,7 +948,6 @@ document.querySelectorAll('.style-option').forEach(option => {
         };
         document.getElementById('current-style').textContent = styleNames[style];
         
-        // Re-analyze with new style
         analyzeCurrentAsset();
         
         if (tg.HapticFeedback) {
@@ -410,15 +956,13 @@ document.querySelectorAll('.style-option').forEach(option => {
     });
 });
 
-// Refresh Interval Selection
+// Refresh Interval
 document.querySelectorAll('.refresh-option').forEach(option => {
     option.addEventListener('click', () => {
         document.querySelectorAll('.refresh-option').forEach(o => o.classList.remove('active'));
         option.classList.add('active');
         
         appState.refreshInterval = parseInt(option.dataset.refresh);
-        
-        // Restart timer
         startRefreshTimer();
         
         if (tg.HapticFeedback) {
@@ -435,11 +979,9 @@ document.getElementById('auto-track').addEventListener('change', (e) => {
 // History Filters
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        // Update active state
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         
-        // Filter history
         const filter = btn.dataset.filter;
         displayTradeHistory(filter);
         
@@ -461,28 +1003,30 @@ function updateLastUpdateTime() {
 }
 
 function startRefreshTimer() {
-    let secondsLeft = appState.refreshInterval;
-    
-    // Clear existing timer
     if (appState.refreshTimer) {
         clearInterval(appState.refreshTimer);
     }
     
-    // Start new timer
     appState.refreshTimer = setInterval(() => {
-        secondsLeft--;
-        
-        if (secondsLeft <= 0) {
-            secondsLeft = appState.refreshInterval;
-            analyzeCurrentAsset();
-        }
-    }, 1000);
+        analyzeCurrentAsset();
+    }, appState.refreshInterval * 1000);
 }
 
 // ==================== INITIALIZATION ====================
 
 async function initializeApp() {
     try {
+        console.log('Initializing JARVIS AI V3...');
+        
+        // Load all trading pairs
+        await fetchAllTradingPairs();
+        
+        // Initialize music
+        initializeMusic();
+        
+        // Initialize chart
+        initializeChart();
+        
         // Initial analysis
         await analyzeCurrentAsset();
         
@@ -492,10 +1036,15 @@ async function initializeApp() {
         // Initialize history tab
         updateHistoryTab();
         
-        // Notify Telegram that app is ready
+        // Update market sentiment
+        updateMarketSentiment();
+        
+        // Update sentiment every 5 minutes
+        setInterval(updateMarketSentiment, 5 * 60 * 1000);
+        
         tg.MainButton.hide();
         
-        console.log('JARVIS AI V2 initialized successfully');
+        console.log('JARVIS AI V3 initialized successfully');
     } catch (error) {
         console.error('Initialization error:', error);
     }
