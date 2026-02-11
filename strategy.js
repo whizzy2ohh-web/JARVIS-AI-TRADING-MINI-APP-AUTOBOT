@@ -456,6 +456,19 @@ class TradingStrategy {
                 tradingStyle: this.tradingStyle
             };
 
+            // After generating signal
+if (signal && appState.autoTrack) {
+    const key = `${symbol}_${timeframe}`;
+    appState.strategy.activeSignals.set(key, {
+        symbol,
+        timeframe,
+        type: signal.type,
+        entry: signal.entry,
+        stopLoss: signal.stopLoss,
+        takeProfit: signal.takeProfit,
+        entryTime: Date.now()
+    });
+}
             // Store active signal
             this.activeSignals.set(key, signal);
         } else if (shortSignal) {
