@@ -385,20 +385,19 @@
                 </div>
 
                 <div class="settings-section">
-                    <h3 class="settings-title">Background Music</h3>
-                    <p class="settings-description">Enhance your trading experience with ambient music</p>
-                    <div class="toggle-setting">
-                        <span>Enable Music</span>
-                        <label class="toggle">
-                            <input type="checkbox" id="music-toggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="volume-control" id="volume-control">
-                        <span class="volume-label">🔊 Volume</span>
-                        <input type="range" id="volume-slider" min="0" max="100" value="50" class="volume-slider">
-                        <span class="volume-value" id="volume-value">50%</span>
-                    </div>
+                    <!-- Background Music -->
+<audio id="background-music" loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_4a485b86b6.mp3">
+</audio>
+
+<!-- Game Sounds -->
+<audio id="game-sound-collect">
+  <source src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_12b0c7443c.mp3">
+</audio>
+
+<audio id="game-sound-gameover">
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_4dedf2bf94.mp3">
+</audio>
                 </div>
 
                 <div class="settings-section">
