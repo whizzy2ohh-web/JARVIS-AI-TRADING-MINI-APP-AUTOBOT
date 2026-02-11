@@ -41,32 +41,59 @@ const loseSound = document.getElementById('lose-sound');
 // ==================== INITIALIZATION ====================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('JARVIS AI Loading...');
+    console.log('=== JARVIS AI V4 Initializing ===');
     
-    // Load saved game state
-    loadGameState();
-    
-    // Initialize all components
-    await fetchAllTradingPairs();
-    setupEventListeners();
-    setupChart();
-    loadMarketSentiment();
-    
-    // Start with default asset
-    await analyzeAsset('BTCUSDT', 'BTC');
-    
-    // Start auto-refresh
-    startAutoRefresh();
-    
-    console.log('JARVIS AI Ready!');
+    try {
+        // Load saved game state
+        loadGameState();
+        console.log('✓ Game state loaded');
+        
+        // Setup event listeners first
+        setupEventListeners();
+        console.log('✓ Event listeners setup');
+        
+        // Initialize chart
+        setupChart();
+        console.log('✓ Chart initialized');
+        
+        // Fetch and display trading pairs
+        console.log('Fetching trading pairs...');
+        await fetchAllTradingPairs();
+        console.log('✓ Trading pairs loaded');
+        
+        // Load market sentiment
+        loadMarketSentiment();
+        console.log('✓ Loading market sentiment');
+        
+        // Start with default asset (BTC)
+        console.log('Analyzing default asset (BTC)...');
+        await analyzeAsset('BTCUSDT', 'BTC');
+        console.log('✓ Initial analysis complete');
+        
+        // Start auto-refresh
+        startAutoRefresh();
+        console.log('✓ Auto-refresh started');
+        
+        console.log('=== JARVIS AI V4 Ready! ===');
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showNotification('App initialized with limited features. Some data may not be available.');
+    }
 });
 
 // ==================== BINANCE API - FETCH ALL PAIRS ====================
 
 async function fetchAllTradingPairs() {
     try {
+        console.log('Fetching trading pairs from Binance...');
         const response = await fetch('https://api.binance.com/api/v3/exchangeInfo');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
+        console.log('Binance API response received');
         
         // Filter for USDT pairs only and active symbols
         const usdtPairs = data.symbols
@@ -76,23 +103,61 @@ async function fetchAllTradingPairs() {
                 baseAsset: s.baseAsset,
                 name: s.baseAsset,
                 isFavorite: false
-            }));
+            }))
+            .sort((a, b) => a.baseAsset.localeCompare(b.baseAsset)); // Sort alphabetically
+        
+        console.log(`Filtered ${usdtPairs.length} USDT trading pairs`);
         
         appState.allPairs = usdtPairs;
         
         // Load favorites from storage
         loadFavorites();
         
-        // Display initial pairs
-        filterPairs('favorites');
+        // Display initial pairs (favorites first, then all if no favorites)
+        if (appState.favorites.length > 0) {
+            filterPairs('favorites');
+        } else {
+            // If no favorites, show top coins
+            filterPairs('top');
+        }
         
-        console.log(`Loaded ${usdtPairs.length} trading pairs`);
+        console.log(`Successfully loaded ${usdtPairs.length} trading pairs`);
         return usdtPairs;
     } catch (error) {
         console.error('Error fetching trading pairs:', error);
-        showError('Failed to load trading pairs. Please check your connection.');
-        return [];
+        
+        // Use fallback data if API fails
+        console.log('Using fallback crypto list...');
+        const fallbackPairs = createFallbackPairs();
+        appState.allPairs = fallbackPairs;
+        loadFavorites();
+        filterPairs('top');
+        
+        showNotification('Using offline mode. Some features may be limited.');
+        return fallbackPairs;
     }
+}
+
+// Fallback crypto pairs if API fails
+function createFallbackPairs() {
+    const cryptos = [
+        'BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'DOGE', 'SOL', 'DOT', 'MATIC', 'SHIB',
+        'AVAX', 'UNI', 'LINK', 'ATOM', 'LTC', 'ETC', 'XLM', 'ALGO', 'VET', 'ICP',
+        'FIL', 'TRX', 'EOS', 'AAVE', 'MKR', 'CAKE', 'SNX', 'COMP', 'YFI', 'SUSHI',
+        'CRV', 'BAT', 'ZEC', 'DASH', 'XMR', 'NEO', 'WAVES', 'ONT', 'ZIL', 'RVN',
+        'ENJ', 'HOT', 'MANA', 'SAND', 'AXS', 'GALA', 'CHZ', 'THETA', 'FTM', 'NEAR',
+        'APE', 'GMT', 'LRC', 'IMX', 'ROSE', 'KAVA', 'RUNE', 'CELO', 'ONE', 'HBAR',
+        'EGLD', 'FLOW', 'XTZ', 'KSM', 'LUNA', 'FTT', 'HNT', 'AR', 'STX', 'QTUM',
+        'ZRX', 'OMG', 'ANKR', 'SKL', 'GRT', 'STORJ', 'OCEAN', 'AUDIO', 'BAND', 'BAL',
+        'CVC', 'NKN', 'OGN', 'RLC', 'RSR', 'TRB', 'UMA', 'WOO', 'API3', 'ARPA'
+    ];
+    
+    return cryptos.map(crypto => ({
+        symbol: `${crypto}USDT`,
+        baseAsset: crypto,
+        name: crypto,
+        isFavorite: false
+    }));
 }
 
 // ==================== FAVORITES MANAGEMENT ====================
@@ -158,6 +223,7 @@ function updateFavoriteButton() {
 // ==================== ASSET FILTERING ====================
 
 function filterPairs(filterType) {
+    console.log(`Filtering pairs by: ${filterType}`);
     appState.currentFilter = filterType;
     
     let filtered = [];
@@ -165,26 +231,46 @@ function filterPairs(filterType) {
     switch (filterType) {
         case 'favorites':
             filtered = appState.allPairs.filter(p => p.isFavorite);
+            console.log(`Found ${filtered.length} favorite pairs`);
+            if (filtered.length === 0) {
+                console.log('No favorites found, showing top coins instead');
+                // If no favorites, switch to top coins
+                document.querySelectorAll('.quick-filter').forEach(b => b.classList.remove('active'));
+                document.querySelector('[data-filter="top"]')?.classList.add('active');
+                filterPairs('top');
+                return;
+            }
             break;
+            
         case 'top':
             // Top 20 by market cap (simplified - using popular coins)
             const topCoins = ['BTC', 'ETH', 'BNB', 'XRP', 'ADA', 'DOGE', 'SOL', 'DOT', 'MATIC', 'SHIB', 
                              'AVAX', 'UNI', 'LINK', 'ATOM', 'LTC', 'ETC', 'XLM', 'ALGO', 'VET', 'ICP'];
             filtered = appState.allPairs.filter(p => topCoins.includes(p.baseAsset));
+            console.log(`Found ${filtered.length} top coins`);
             break;
+            
         case 'defi':
-            const defiCoins = ['UNI', 'AAVE', 'LINK', 'SNX', 'COMP', 'MKR', 'YFI', 'SUSHI', 'CRV', 'CAKE'];
+            const defiCoins = ['UNI', 'AAVE', 'LINK', 'SNX', 'COMP', 'MKR', 'YFI', 'SUSHI', 'CRV', 'CAKE', 
+                              'BAND', 'BAL', 'REN', 'KNC', '1INCH', 'ALPHA'];
             filtered = appState.allPairs.filter(p => defiCoins.includes(p.baseAsset));
+            console.log(`Found ${filtered.length} DeFi coins`);
             break;
+            
         case 'meme':
-            const memeCoins = ['DOGE', 'SHIB', 'PEPE', 'FLOKI', 'BONE', 'ELON'];
+            const memeCoins = ['DOGE', 'SHIB', 'PEPE', 'FLOKI', 'BONE', 'ELON', 'BABYDOGE', 'SAITAMA'];
             filtered = appState.allPairs.filter(p => memeCoins.includes(p.baseAsset));
+            console.log(`Found ${filtered.length} meme coins`);
             break;
+            
         case 'all':
             filtered = appState.allPairs;
+            console.log(`Showing all ${filtered.length} pairs`);
             break;
+            
         default:
             filtered = appState.allPairs;
+            console.log(`Default: showing all ${filtered.length} pairs`);
     }
     
     appState.filteredPairs = filtered;
@@ -193,15 +279,23 @@ function filterPairs(filterType) {
 }
 
 function searchAssets(searchTerm) {
-    if (!searchTerm) {
+    console.log(`Searching for: "${searchTerm}"`);
+    
+    if (!searchTerm || searchTerm.trim() === '') {
+        console.log('Empty search, showing current filter');
         filterPairs(appState.currentFilter);
         return;
     }
     
-    const term = searchTerm.toUpperCase();
+    const term = searchTerm.toUpperCase().trim();
+    
     const filtered = appState.allPairs.filter(p => 
-        p.symbol.includes(term) || p.baseAsset.includes(term)
+        p.symbol.includes(term) || 
+        p.baseAsset.includes(term) ||
+        p.name.includes(term)
     );
+    
+    console.log(`Search found ${filtered.length} matches`);
     
     appState.filteredPairs = filtered;
     displayAssets(filtered);
@@ -211,17 +305,29 @@ function searchAssets(searchTerm) {
 function displayAssets(assets) {
     const container = document.getElementById('crypto-assets');
     
-    if (assets.length === 0) {
+    if (!container) {
+        console.error('Asset container not found!');
+        return;
+    }
+    
+    console.log(`Displaying ${assets.length} assets`);
+    
+    if (!assets || assets.length === 0) {
         container.innerHTML = `
             <div class="no-results">
                 <div class="no-results-icon">🔍</div>
                 <p>No assets found</p>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 0.5rem;">Try selecting "All" or a different filter</p>
             </div>
         `;
         return;
     }
     
-    container.innerHTML = assets.slice(0, 100).map(asset => `
+    // Limit to first 100 for performance, but show all if searching
+    const displayLimit = appState.currentFilter === 'all' ? 200 : 100;
+    const assetsToDisplay = assets.slice(0, displayLimit);
+    
+    const html = assetsToDisplay.map(asset => `
         <div class="asset-card" data-symbol="${asset.symbol}" data-name="${asset.baseAsset}">
             <div class="asset-name">${asset.baseAsset}</div>
             <div class="asset-symbol">${asset.symbol}</div>
@@ -229,14 +335,28 @@ function displayAssets(assets) {
         </div>
     `).join('');
     
-    // Add click handlers
-    container.querySelectorAll('.asset-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const symbol = card.dataset.symbol;
-            const name = card.dataset.name;
+    container.innerHTML = html;
+    
+    // Add click handlers to all asset cards
+    const cards = container.querySelectorAll('.asset-card');
+    console.log(`Added ${cards.length} asset cards`);
+    
+    cards.forEach(card => {
+        card.addEventListener('click', function() {
+            const symbol = this.dataset.symbol;
+            const name = this.dataset.name;
+            
+            console.log(`Selected: ${name} (${symbol})`);
+            
+            // Visual feedback
+            document.querySelectorAll('.asset-card').forEach(c => c.classList.remove('selected'));
+            this.classList.add('selected');
+            
             selectAsset(symbol, name);
         });
     });
+    
+    console.log('Asset display complete');
 }
 
 function updateAssetCount(count) {
