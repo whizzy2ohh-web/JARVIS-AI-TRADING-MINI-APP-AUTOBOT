@@ -1072,3 +1072,32 @@ document.getElementById('feedback-submit').addEventListener('click', () => {
     // Show confirmation
     alert(`Thank you for your ${rating}-star feedback!`);
 });
+
+// Simple falling coins game
+const game = {
+    player: { x: 150, y: 350, width: 40, height: 40 },
+    coins: [],
+    score: 0,
+    
+    update() {
+        // Move coins down
+        this.coins.forEach(coin => {
+            coin.y += coin.speed;
+            
+            // Check collision
+            if (this.checkCollision(coin)) {
+                this.score++;
+                collectSound.play();
+            }
+        });
+    },
+    
+    checkCollision(coin) {
+        return (
+            this.player.x < coin.x + coin.width &&
+            this.player.x + this.player.width > coin.x &&
+            this.player.y < coin.y + coin.height &&
+            this.player.y + this.player.height > coin.y
+        );
+    }
+};
