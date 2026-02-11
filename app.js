@@ -300,44 +300,34 @@ async function updateMarketSentiment() {
 }
 
 // ==================== CHART FUNCTIONALITY ====================
-
 function initializeChart() {
     const container = document.getElementById('chart-container');
-    if (!container) return;
+    if (!container) {
+        console.error('Chart container not found, retrying...');
+        setTimeout(initializeChart, 1000);  // ✅ Retries after 1 sec
+        return;
+    }
     
-    // Clear loading state
     container.innerHTML = '';
     
-    // Create chart
-    appState.chart = LightweightCharts.createChart(container, {
-        width: container.clientWidth,
-        height: 400,
-        layout: {
-            background: { color: '#1a1f35' },
-            textColor: '#a8b3cf',
-        },
-        grid: {
-            vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
-            horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        rightPriceScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-        },
-        timeScale: {
-            borderColor: 'rgba(255, 255, 255, 0.1)',
-            timeVisible: true,
-        },
-    });
-    
-    // Make responsive
-    window.addEventListener('resize', () => {
-        if (appState.chart) {
-            appState.chart.applyOptions({ width: container.clientWidth });
-        }
-    });
+    try {  // ✅ Error handling
+        appState.chart = LightweightCharts.createChart(container, {
+            // ... config
+        });
+        
+        window.addEventListener('resize', () => {
+            if (appState.chart && container) {  // ✅ Checks both
+                appState.chart.applyOptions({ 
+                    width: container.clientWidth 
+                });
+            }
+        });
+        
+        console.log('Chart initialized successfully');
+    } catch (error) {
+        console.error('Chart initialization error:', error);
+        container.innerHTML = '<div class="loading-state"><p>Chart error. Please refresh page.</p></div>';
+    }
 }
 
 async function updateChart(candles, signal) {
